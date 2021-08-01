@@ -24,5 +24,4 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Tree output
-      run: dir target/ && dir && dir target/debug/ && dir target/release/
-
+      run: dir target/ && dir && dir target/debug/
