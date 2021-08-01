@@ -27,5 +27,7 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         name: ${{ join('trackie-', runner.os) }}
-        path: "target/debug/trackie?(.exe)"
+        path: |
+          target/debug/trackie
+          target/debug/trackie.exe
         if-no-files-found: error
