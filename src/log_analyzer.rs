@@ -1,5 +1,8 @@
+use crate::log_analyzer::Category::{DateRange, Project};
 use crate::time_log::{LogEntry, TimeLog};
 use chrono::{Date, Duration, Local};
+use colored::Colorize;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
@@ -20,24 +23,40 @@ pub struct Report {
 impl Display for Report {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         fn print_duration(dur: &Duration) -> String {
-            format!("{}h {}m", dur.num_hours(), dur.num_minutes())
+            let remaining_min = dur.num_minutes() - (dur.num_hours() * 60);
+            format!("{:02}h {:02}m", dur.num_hours(), remaining_min)
         }
-        fn format(string: &mut String, target: &Report, indent: u32) {
-            let indent_str: String = String::from_utf8(vec![' ' as u8; indent as usize]).unwrap();
-            string.push_str(&format!(
-                "{}{}: {}\n",
-                indent_str,
-                target.category,
-                print_duration(&target.overall_duration)
-            ));
+        fn format(f: &mut Formatter, target: &Report, level: u32) -> std::fmt::Result {
+            let arrow = "❯";
+            match level {
+                1 => write!(
+                    f,
+                    "{} {} [{}]\n",
+                    arrow.green(),
+                    target.category,
+                    print_duration(&target.overall_duration)
+                )?,
+                2 => write!(
+                    f,
+                    "    {} {:<11} [{}]\n",
+                    arrow,
+                    target.category.to_string().as_str().bold(),
+                    print_duration(&target.overall_duration)
+                )?,
+                _ => {}
+            };
+
             for c in &target.child_reports {
-                format(string, c, indent + 4);
+                format(f, c, level + 1)?;
             }
+            if !target.child_reports.is_empty() {
+                write!(f, "\n")?;
+            }
+            Ok(())
         }
 
-        let mut result = String::with_capacity(250 * self.child_reports.len());
-        format(&mut result, self, 0);
-        write!(f, "{}", result)
+        format(f, self, 0)?;
+        Ok(())
     }
 }
 
@@ -53,6 +72,36 @@ pub enum Category {
     Project(String),
     Date(Date<Local>),
     DateRange(Range<Date<Local>>),
+}
+
+impl Ord for Category {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Project(p1), Project(p2)) => p1.cmp(p2),
+            (Project(_), Category::Date(_)) => Ordering::Greater,
+            (Project(_), DateRange(_)) => Ordering::Greater,
+            (Category::Date(_), DateRange(_)) => Ordering::Greater,
+            (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
+            (Category::Date(_), Project(_)) => Ordering::Less,
+            (DateRange(r1), DateRange(r2)) => r1.start.cmp(&r2.start),
+            (DateRange(_), Category::Date(_)) => Ordering::Less,
+            (DateRange(_), Project(_)) => Ordering::Less,
+        }
+    }
+}
+
+impl Eq for Category {}
+
+impl PartialEq for Category {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl PartialOrd for Category {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Display for Category {
@@ -99,7 +148,8 @@ impl ReportCreator<'_> {
         let log = self.time_log.for_day(date);
 
         let groups = Self::group_by_key(&log, |i| String::from(&i.key));
-        let child_reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
+        let mut child_reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
+        child_reports.sort_unstable_by(|a, b| a.category.cmp(&b.category));
 
         Report {
             category: Category::Date(date.to_owned()),

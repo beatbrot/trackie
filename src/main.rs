@@ -4,10 +4,11 @@ use std::io::Write;
 
 use chrono::Local;
 
-use clap::Clap;
 use crate::cli::{Opts, Subcommand};
 use crate::log_analyzer::ReportCreator;
 use crate::time_log::TimeLog;
+use clap::Clap;
+use colored::Colorize;
 use std::fmt::Formatter;
 
 mod cli;
@@ -17,7 +18,7 @@ mod time_log;
 fn main() {
     include_str!("../Cargo.toml");
     if let Err(e) = run_app() {
-        eprintln!("{}", e);
+        eprintln!("{} {}", "ERROR:".red(), e);
     }
 }
 
@@ -31,13 +32,13 @@ fn run_app() -> Result<(), Box<dyn Error>> {
         Subcommand::Start(p) => {
             modified = true;
             if let Some(warn) = log.start_log(&p.key)? {
-                println!("WARN: {}", warn);
+                println!("{} {}", "WARN:".yellow(), warn);
             }
         }
         Subcommand::Stop(_) => {
             modified = true;
             if let Some(warn) = log.stop_pending()? {
-                println!("WARN: {}", warn);
+                println!("{} {}", "WARN:".yellow(), warn);
             }
         }
         Subcommand::Report(o) => {
@@ -97,7 +98,7 @@ impl TrackieError {
 
 impl std::fmt::Display for TrackieError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "ERROR: {}", self.msg)
+        write!(f, "{}", self.msg)
     }
 }
 
