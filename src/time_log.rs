@@ -1,7 +1,7 @@
-use std::error::Error;
-use chrono::{Date, DateTime, Local, Duration};
-use serde::{Deserialize, Serialize};
 use crate::TrackieError;
+use chrono::{Date, DateTime, Duration, Local};
+use serde::{Deserialize, Serialize};
+use std::error::Error;
 
 type OptError = Result<Option<String>, Box<dyn Error>>;
 
@@ -72,21 +72,70 @@ impl TimeLog {
             self.pending = None;
             Ok(None)
         } else {
-            Err(Box::new(TrackieError::new("No time is currently tracked.".to_string())))
+            Err(Box::new(TrackieError::new(
+                "No time is currently tracked.".to_string(),
+            )))
         }
     }
 
     pub fn for_day(&self, date: &Date<Local>) -> Vec<&LogEntry> {
-        self.entries.iter()
-            .filter(|e| {
-                e.start.date().eq(date)
-            })
+        self.entries
+            .iter()
+            .filter(|e| e.start.date().eq(date))
             .collect()
     }
+}
 
-    pub fn for_key(&self, key: &str) -> Vec<&LogEntry> {
-        self.entries.iter()
-            .filter(|e| e.key.eq(key))
-            .collect()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+    use spectral::prelude::*;
+
+    #[test]
+    fn start_worklog_fresh() {
+        let mut l = TimeLog::new();
+        let result = l.start_log("ABC").unwrap();
+
+        assert_that(&result).is_none();
+    }
+
+    #[test]
+    fn start_worklog_overwrite() {
+        let mut l = TimeLog::new();
+        l.start_log("ABC").unwrap();
+
+        let result = l.start_log("DEF").unwrap();
+
+        assert_that(&result).is_some();
+    }
+
+    #[test]
+    fn stop_nonexiting_workload() {
+        let mut l = TimeLog::new();
+        let result = l.stop_pending();
+
+        assert_that(&result).is_err();
+    }
+
+    #[test]
+    fn filter_items_for_day() {
+        let lg = TimeLog {
+            pending: None,
+            entries: vec![create_log(01, 30, "Target"), create_log(02, 40, "Fail")],
+        };
+
+        let result = lg.for_day(&Local.ymd(2000, 01, 01));
+
+        assert_that(&result).has_length(1);
+        assert_eq!(&result.get(0).unwrap().key, "Target")
+    }
+
+    fn create_log(day: u32, dur: u32, name: &str) -> LogEntry {
+        LogEntry {
+            start: Local.ymd(2000, 01, day).and_hms(4, 0, 20),
+            end: Local.ymd(2000, 01, day).and_hms(4, dur, 20),
+            key: name.to_string(),
+        }
     }
 }

@@ -1,5 +1,5 @@
 use crate::time_log::{LogEntry, TimeLog};
-use chrono::{Date, DateTime, Duration, Local};
+use chrono::{Date, Duration, Local};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
@@ -53,7 +53,6 @@ pub enum Category {
     Project(String),
     Date(Date<Local>),
     DateRange(Range<Date<Local>>),
-    None(),
 }
 
 impl Display for Category {
@@ -64,7 +63,6 @@ impl Display for Category {
             Category::DateRange(r) => {
                 write!(f, "{} to {}", r.start.format("%F"), r.end.format("%F"))
             }
-            Category::None() => write!(f, "None"),
         }
     }
 }
@@ -101,12 +99,12 @@ impl ReportCreator<'_> {
         let log = self.time_log.for_day(date);
 
         let groups = Self::group_by_key(&log, |i| String::from(&i.key));
-        let reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
+        let child_reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
 
         Report {
             category: Category::Date(date.to_owned()),
-            overall_duration: Report::create_duration_sum(&reports),
-            child_reports: reports,
+            overall_duration: Report::create_duration_sum(&child_reports),
+            child_reports,
         }
     }
 
@@ -122,11 +120,6 @@ impl ReportCreator<'_> {
     fn sum_time(vec: &[&LogEntry]) -> Duration {
         vec.iter()
             .fold(Duration::zero(), |d, e| d.add(e.to_duration()))
-    }
-
-    fn sum_time_string(vec: &[&LogEntry]) -> String {
-        let d = Self::sum_time(vec);
-        format!("{}h {}m", d.num_hours(), d.num_minutes())
     }
 
     fn group_by_key<'a, K: Eq + Hash>(

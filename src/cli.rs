@@ -1,4 +1,4 @@
-use clap::{crate_authors, crate_description, crate_version, Clap};
+use clap::{crate_authors, crate_version, Clap};
 
 #[derive(Clap)]
 #[clap(author=crate_authors!(), version=crate_version!())]
