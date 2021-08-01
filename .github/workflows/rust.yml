@@ -28,6 +28,6 @@ jobs:
       with:
         name: trackie
         path: |
-          target/debug/trackie
-          target/debug/trackie.exe
+          target/release/trackie
+          target/release/trackie.exe
         if-no-files-found: error
