@@ -31,14 +31,15 @@ impl Display for Report {
             match level {
                 1 => write!(
                     f,
-                    "{} {} [{}]\n",
+                    "{} {}{:<25}[{}]\n",
                     arrow.green(),
                     target.category,
+                    ' ',
                     print_duration(&target.overall_duration)
                 )?,
                 2 => write!(
                     f,
-                    "    {} {:<11} [{}]\n",
+                    "    {} {:<35} [{}]\n",
                     arrow,
                     target.category.to_string().as_str().bold(),
                     print_duration(&target.overall_duration)
@@ -48,9 +49,6 @@ impl Display for Report {
 
             for c in &target.child_reports {
                 format(f, c, level + 1)?;
-            }
-            if !target.child_reports.is_empty() {
-                write!(f, "\n")?;
             }
             Ok(())
         }
