@@ -20,13 +20,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
     - name: Run tests
       run: cargo test --verbose
     - name: Publish artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: ${{ join('trackie-', runner.os) }}
+        name: trackie
         path: |
           target/debug/trackie
           target/debug/trackie.exe
