@@ -22,6 +22,18 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Run tests
-      run: cargo test --verbose
-    - name: Tree output
-      run: dir target/ && dir && dir target/debug/
+      run: cargo test --verbose 
+    - name: Publish artifact (Linux)
+      uses: actions/upload-artifact@v2.2.4
+      if: ${{ matrix.os == "ubuntu-latest" }}
+      with:
+        name: "trackie-linux"
+        path: "debug/trackie"
+        if-no-files-found: warn
+    - name: Publish artifact (Win)
+      uses: actions/upload-artifact@v2.2.4
+      if: ${{ matrix.os == "windows-latest" }}
+      with:
+        name: "trackie-win.exe"
+        path: "debug/trackie.exe"
+        if-no-files-found: warn
