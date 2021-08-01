@@ -22,18 +22,18 @@ jobs:
     - name: Build
       run: cargo build --verbose
     - name: Run tests
-      run: cargo test --verbose 
+      run: cargo test --verbose
     - name: Publish artifact (Linux)
       uses: actions/upload-artifact@v2.2.4
-      if: ${{ contains(matrix.os, 'ubuntu') }}
+      if: ${{ runner.os == 'Linux' }}
       with:
         name: "trackie-linux"
         path: "target/debug/trackie"
         if-no-files-found: error
     - name: Publish artifact (Win)
       uses: actions/upload-artifact@v2.2.4
-      if: ${{ contains(matrix.os, 'windows')  }}
+      if: ${{ runner.os == 'Windows' }}
       with:
-        name: "trackie-win.exe"
+        name: "trackie-win"
         path: "target/debug/trackie.exe"
         if-no-files-found: warn
