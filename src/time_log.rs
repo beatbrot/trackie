@@ -1,7 +1,9 @@
-use crate::TrackieError;
+use std::error::Error;
+
 use chrono::{Date, DateTime, Duration, Local};
 use serde::{Deserialize, Serialize};
-use std::error::Error;
+
+use crate::TrackieError;
 
 type OptError = Result<Option<String>, Box<dyn Error>>;
 
@@ -78,19 +80,20 @@ impl TimeLog {
         }
     }
 
-    pub fn for_day(&self, date: &Date<Local>) -> Vec<&LogEntry> {
+    pub fn for_day(&self, date: Date<Local>) -> Vec<&LogEntry> {
         self.entries
             .iter()
-            .filter(|e| e.start.date().eq(date))
+            .filter(|e| e.start.date() == date)
             .collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use chrono::TimeZone;
+    use chrono::{Datelike, TimeZone};
     use spectral::prelude::*;
+
+    use super::*;
 
     #[test]
     fn start_worklog_fresh() {
@@ -122,10 +125,10 @@ mod tests {
     fn filter_items_for_day() {
         let lg = TimeLog {
             pending: None,
-            entries: vec![create_log(01, 30, "Target"), create_log(02, 40, "Fail")],
+            entries: vec![create_log(1, 30, "Target"), create_log(2, 40, "Fail")],
         };
 
-        let result = lg.for_day(&Local.ymd(2000, 01, 01));
+        let result = lg.for_day(test_date());
 
         assert_that(&result).has_length(1);
         assert_eq!(&result.get(0).unwrap().key, "Target")
@@ -133,9 +136,13 @@ mod tests {
 
     fn create_log(day: u32, dur: u32, name: &str) -> LogEntry {
         LogEntry {
-            start: Local.ymd(2000, 01, day).and_hms(4, 0, 20),
-            end: Local.ymd(2000, 01, day).and_hms(4, dur, 20),
+            start: test_date().with_day(day).unwrap().and_hms(4, 0, 20),
+            end: test_date().with_day(day).unwrap().and_hms(4, dur, 20),
             key: name.to_string(),
         }
+    }
+
+    fn test_date() -> Date<Local> {
+        Local.ymd(2000, 01, 01)
     }
 }

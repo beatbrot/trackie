@@ -1,4 +1,4 @@
-use crate::log_analyzer::Category::{DateRange, Project};
+use crate::report_creator::Category::{DateRange, Project};
 use crate::time_log::{LogEntry, TimeLog};
 use chrono::{Date, Duration, Local};
 use colored::Colorize;
@@ -9,6 +9,8 @@ use std::hash::Hash;
 use std::ops::{Add, Range, Sub};
 
 type GroupBy<'a, K> = HashMap<K, Vec<&'a LogEntry>>;
+
+const ARROW: &str = "❯";
 
 pub struct ReportCreator<'a> {
     time_log: &'a TimeLog,
@@ -27,20 +29,19 @@ impl Display for Report {
             format!("{:02}h {:02}m", dur.num_hours(), remaining_min)
         }
         fn format(f: &mut Formatter, target: &Report, level: u32) -> std::fmt::Result {
-            let arrow = "❯";
             match level {
-                1 => write!(
+                1 => writeln!(
                     f,
-                    "{} {}{:<25}[{}]\n",
-                    arrow.green(),
+                    "{} {}{:<25}[{}]",
+                    ARROW.green(),
                     target.category,
                     ' ',
                     print_duration(&target.overall_duration)
                 )?,
-                2 => write!(
+                2 => writeln!(
                     f,
-                    "    {} {:<35} [{}]\n",
-                    arrow,
+                    "    {} {:<35} [{}]",
+                    ARROW,
                     target.category.to_string().as_str().bold(),
                     print_duration(&target.overall_duration)
                 )?,
@@ -59,7 +60,7 @@ impl Display for Report {
 }
 
 impl Report {
-    fn create_duration_sum(reports: &Vec<Report>) -> Duration {
+    fn create_duration_sum(reports: &[Report]) -> Duration {
         reports
             .iter()
             .fold(Duration::zero(), |d, r| d.add(r.overall_duration))
@@ -76,14 +77,14 @@ impl Ord for Category {
     fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (Project(p1), Project(p2)) => p1.cmp(p2),
-            (Project(_), Category::Date(_)) => Ordering::Greater,
-            (Project(_), DateRange(_)) => Ordering::Greater,
-            (Category::Date(_), DateRange(_)) => Ordering::Greater,
             (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
-            (Category::Date(_), Project(_)) => Ordering::Less,
             (DateRange(r1), DateRange(r2)) => r1.start.cmp(&r2.start),
-            (DateRange(_), Category::Date(_)) => Ordering::Less,
-            (DateRange(_), Project(_)) => Ordering::Less,
+            (Project(_), Category::Date(_))
+            | (Project(_), DateRange(_))
+            | (Category::Date(_), DateRange(_)) => Ordering::Greater,
+            (DateRange(_), Category::Date(_))
+            | (DateRange(_), Project(_))
+            | (Category::Date(_), Project(_)) => Ordering::Less,
         }
     }
 }
@@ -120,29 +121,28 @@ impl ReportCreator<'_> {
     }
 
     pub fn report_days(&self, date: Date<Local>, days: u32, include_empty_days: bool) -> Report {
-        let start_date = date.sub(Duration::days((days as i64) - 1)).to_owned();
-        let range = start_date..date;
+        let start_date = date.sub(Duration::days(i64::from(days) - 1)).clone();
 
-        let mut reports: Vec<Report> = Vec::new();
+        let mut child_reports: Vec<Report> = Vec::new();
         let mut curr_date: Date<Local> = start_date;
         loop {
-            if !self.time_log.for_day(&curr_date).is_empty() || include_empty_days {
-                reports.push(self.report_day(&curr_date));
+            if !self.time_log.for_day(curr_date).is_empty() || include_empty_days {
+                child_reports.push(self.report_day(curr_date));
             }
-            if curr_date.eq(&date) {
+            if curr_date == date {
                 break;
             }
             curr_date = curr_date.succ();
         }
 
         Report {
-            category: Category::DateRange(range),
-            overall_duration: Report::create_duration_sum(&reports),
-            child_reports: reports,
+            category: Category::DateRange(start_date..date),
+            overall_duration: Report::create_duration_sum(&child_reports),
+            child_reports,
         }
     }
 
-    pub fn report_day(&self, date: &Date<Local>) -> Report {
+    pub fn report_day(&self, date: Date<Local>) -> Report {
         let log = self.time_log.for_day(date);
 
         let groups = Self::group_by_key(&log, |i| String::from(&i.key));
@@ -150,7 +150,7 @@ impl ReportCreator<'_> {
         child_reports.sort_unstable_by(|a, b| a.category.cmp(&b.category));
 
         Report {
-            category: Category::Date(date.to_owned()),
+            category: Category::Date(date.clone()),
             overall_duration: Report::create_duration_sum(&child_reports),
             child_reports,
         }
@@ -179,7 +179,7 @@ impl ReportCreator<'_> {
         for entry in vec.iter() {
             let key = key_extractor(entry);
             let v = result.entry(key).or_insert_with(Vec::<&LogEntry>::new);
-            v.push(&entry)
+            v.push(entry);
         }
 
         result
