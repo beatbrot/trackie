@@ -33,10 +33,10 @@ fn run_app() -> Result<(), Box<dyn Error>> {
     match o.sub_cmd {
         Subcommand::Start(p) => {
             modified = true;
-            if let Some(warn) = log.start_log(&p.key)? {
+            if let Some(warn) = log.start_log(&p.project_name)? {
                 println!("{} {}", "WARN:".yellow(), warn);
             }
-            println!("Tracking time for project {}", p.key.as_str().italic());
+            println!("Tracking time for project {}", p.project_name.as_str().italic());
         }
         Subcommand::Stop(_) => {
             modified = true;

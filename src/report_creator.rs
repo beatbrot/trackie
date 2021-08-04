@@ -145,8 +145,8 @@ impl ReportCreator<'_> {
     pub fn report_day(&self, date: Date<Local>) -> Report {
         let log = self.time_log.for_day(date);
 
-        let groups = Self::group_by_key(log, |i| String::from(&i.key));
-        let mut child_reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
+        let groups = Self::group_by_key(log, |i| String::from(&i.project_name));
+        let mut child_reports: Vec<Report> = groups.iter().map(Self::report_project).collect();
         child_reports.sort_unstable_by(|a, b| a.category.cmp(&b.category));
 
         Report {
@@ -156,10 +156,10 @@ impl ReportCreator<'_> {
         }
     }
 
-    fn report_ticket(tuple: (&String, &Vec<&LogEntry>)) -> Report {
-        let (key, entries) = tuple;
+    fn report_project(tuple: (&String, &Vec<&LogEntry>)) -> Report {
+        let (name, entries) = tuple;
         Report {
-            category: Category::Project(key.to_string()),
+            category: Category::Project(name.to_string()),
             overall_duration: Self::sum_time(entries),
             child_reports: Vec::new(),
         }
@@ -208,7 +208,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_over_multiple_logs_for_same_ticket() {
+    fn test_sum_over_multiple_logs_for_same_project() {
         let today = test_date().with_day(1).unwrap();
         let tl = TimeLog::new_testing_only(BTreeMap::from_iter(vec![(
             today.naive_local(),
@@ -224,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sum_over_multiple_logs_for_different_tickets() {
+    fn test_sum_over_multiple_logs_for_different_project() {
         let today = test_date().with_day(1).unwrap();
         let tl = TimeLog::new_testing_only(BTreeMap::from_iter(vec![(
             today.naive_local(),
@@ -283,7 +283,7 @@ mod tests {
         LogEntry {
             start: test_date().with_day(day).unwrap().and_hms(4, 0, 20),
             end: test_date().with_day(day).unwrap().and_hms(4, dur, 20),
-            key: name.to_string(),
+            project_name: name.to_string(),
         }
     }
 

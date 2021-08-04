@@ -10,13 +10,13 @@ type OptError = Result<Option<String>, Box<dyn Error>>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct PendingLog {
-    key: String,
+    project_name: String,
     start: DateTime<Local>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
-    pub key: String,
+    pub project_name: String,
     pub start: DateTime<Local>,
     pub end: DateTime<Local>,
 }
@@ -24,7 +24,7 @@ pub struct LogEntry {
 impl LogEntry {
     fn from_time_log(log: &PendingLog, end: DateTime<Local>) -> LogEntry {
         LogEntry {
-            key: (&log.key).to_string(),
+            project_name: (&log.project_name).to_string(),
             start: log.start,
             end,
         }
@@ -61,14 +61,14 @@ impl TimeLog {
         }
     }
 
-    pub fn start_log(&mut self, key: &str) -> OptError {
+    pub fn start_log(&mut self, project_name: &str) -> OptError {
         let mut warn: Option<String> = None;
         if let Some(p) = &self.pending {
-            warn = Some(format!("Stopping time-tracking for {}", p.key));
+            warn = Some(format!("Stopping time-tracking for {}", p.project_name));
             self.stop_pending()?;
         }
         let lg = PendingLog {
-            key: key.to_string(),
+            project_name: project_name.to_string(),
             start: Local::now(),
         };
         self.pending = Some(lg);
@@ -140,7 +140,7 @@ mod tests {
         let result = lg.for_day(test_date());
 
         assert_eq!(result.len(), 1);
-        assert_eq!(&result.get(0).unwrap().key, "Target");
+        assert_eq!(&result.get(0).unwrap().project_name, "Target");
     }
 
     #[test]
@@ -184,7 +184,7 @@ mod tests {
         LogEntry {
             start: test_date().with_day(day).unwrap().and_hms(4, 0, 20),
             end: test_date().with_day(day).unwrap().and_hms(4, dur, 20),
-            key: name.to_string(),
+            project_name: name.to_string(),
         }
     }
 
