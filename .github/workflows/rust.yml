@@ -19,6 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Check against EditorConfig
+      uses: zbeekman/EditorConfig-Action@v1.1.1
     - name: Build
       run: cargo build --release
     - name: Run tests
