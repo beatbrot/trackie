@@ -24,7 +24,7 @@ pub struct EmptyCommand {}
 #[derive(Clap)]
 pub struct TimingCommand {
     /// The name of the project
-    pub key: String,
+    pub project_name: String,
 }
 
 #[derive(Clap)]
