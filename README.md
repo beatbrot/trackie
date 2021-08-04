@@ -5,6 +5,8 @@
 </div>
 
 ---
+[![asciicast](.github/media/terminal-session.gif)](https://asciinema.org/a/428833)
+---
 
 Trackie offers an easy CLI to track the time you spent on your various projects. It bundles up your busy days in easy digestible reports that you can filter to your liking.
 
