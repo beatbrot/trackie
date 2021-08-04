@@ -79,12 +79,12 @@ impl Ord for Category {
             (Project(p1), Project(p2)) => p1.cmp(p2),
             (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
             (DateRange(r1), DateRange(r2)) => r1.start.cmp(&r2.start),
-            (Project(_), Category::Date(_))
-            | (Project(_), DateRange(_))
-            | (Category::Date(_), DateRange(_)) => Ordering::Greater,
-            (DateRange(_), Category::Date(_))
-            | (DateRange(_), Project(_))
-            | (Category::Date(_), Project(_)) => Ordering::Less,
+            (Project(_), Category::Date(_) | DateRange(_)) | (Category::Date(_), DateRange(_)) => {
+                Ordering::Greater
+            }
+            (DateRange(_), Category::Date(_) | Project(_)) | (Category::Date(_), Project(_)) => {
+                Ordering::Less
+            }
         }
     }
 }
@@ -191,7 +191,7 @@ mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone};
     use spectral::assert_that;
-    use spectral::prelude::{VecAssertions, StrAssertions};
+    use spectral::prelude::{StrAssertions, VecAssertions};
     use std::collections::BTreeMap;
     use std::iter::FromIterator;
 
@@ -246,7 +246,7 @@ mod tests {
         let tl = tl_multiple_days(today, tomorrow);
 
         let rc = ReportCreator::new(&tl);
-        let report = rc.report_days(tomorrow, 2,true);
+        let report = rc.report_days(tomorrow, 2, true);
 
         assert!(matches!(report.category, Category::DateRange(_)));
         assert_that!(report.overall_duration).is_equal_to(Duration::minutes(50));
@@ -260,7 +260,7 @@ mod tests {
         let tl = tl_multiple_days(today, tomorrow);
         let rc = ReportCreator::new(&tl);
 
-        let report = rc.report_days(tomorrow,2,true);
+        let report = rc.report_days(tomorrow, 2, true);
         let r_string = report.to_string();
 
         assert_that!(r_string).contains("Foo");
@@ -275,10 +275,7 @@ mod tests {
                 today.naive_local(),
                 vec![create_log(1, 30, "Foo"), create_log(1, 10, "Bar")],
             ),
-            (
-                tomorrow.naive_local(),
-                vec![create_log(2, 10, "Bar")],
-            ),
+            (tomorrow.naive_local(), vec![create_log(2, 10, "Bar")]),
         ]))
     }
 

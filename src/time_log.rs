@@ -95,8 +95,7 @@ impl TimeLog {
     pub fn for_day(&self, date: Date<Local>) -> &[LogEntry] {
         self.entries
             .get(&date.naive_local())
-            .map(|f| f.as_slice())
-            .unwrap_or(&[])
+            .map_or(&[], Vec::as_slice)
     }
 }
 
@@ -165,7 +164,7 @@ mod tests {
         assert_that!(deserialized.entries.len()).is_equal_to(0);
     }
 
-    fn create_tl_with_two_dates() -> TimeLog{
+    fn create_tl_with_two_dates() -> TimeLog {
         TimeLog {
             pending: None,
             entries: BTreeMap::from_iter(vec![
