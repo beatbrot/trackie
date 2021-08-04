@@ -4,6 +4,11 @@
 `trackie` is a private, daemon-less time tracker running in your CLI.
 </div>
 
+
+<div align="center">
+<a href="https://asciinema.org/a/428833" target="_blank"><img src=".github/media/terminal-session.gif" width="90%" align="center"/></a>
+</div>
+
 ---
 
 Trackie offers an easy CLI to track the time you spent on your various projects. It bundles up your busy days in easy digestible reports that you can filter to your liking.
@@ -18,4 +23,10 @@ Trackie currently consists of three simple commands:
 
 - `trackie start <project-ID>`: Starts time tracking for a project with the given ID.
 - `trackie stop`: Stops the time tracking
-- `trackie report [-d <num-days]`: Creates a report for the last *n* days (default: 5).
+- `trackie report [-d <num-days] [-i/--include-empty-days]`: Creates a report for the last *n* days (default: 5).
+
+## Installation
+
+1. Clone this repository
+2. Enter its directory with a terminal
+3. Run `cargo install --path .`

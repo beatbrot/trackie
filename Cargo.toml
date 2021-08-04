@@ -4,6 +4,15 @@ version = "0.1.0"
 authors = ["beatbrot <loy.christoph@gmail.com>"]
 edition = "2018"
 
+readme = "README.md"
+repository = "https://github.com/beatbrot/trackie"
+license = "Apache-2.0"
+
+description = "⏳ trackie is a private, daemon-less time tracker running in your CLI."
+keywords = ["time-tracking", "tracking", "cli", "command-line", "project-management"]
+categories = ["command-line-utilities", "visualization"]
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
