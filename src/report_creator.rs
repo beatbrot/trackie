@@ -121,7 +121,7 @@ impl ReportCreator<'_> {
     }
 
     pub fn report_days(&self, date: Date<Local>, days: u32, include_empty_days: bool) -> Report {
-        let start_date = date.sub(Duration::days(i64::from(days) - 1)).clone();
+        let start_date = date.sub(Duration::days(i64::from(days) - 1));
 
         let mut child_reports: Vec<Report> = Vec::new();
         let mut curr_date: Date<Local> = start_date;
@@ -145,12 +145,12 @@ impl ReportCreator<'_> {
     pub fn report_day(&self, date: Date<Local>) -> Report {
         let log = self.time_log.for_day(date);
 
-        let groups = Self::group_by_key(&log, |i| String::from(&i.key));
+        let groups = Self::group_by_key(log, |i| String::from(&i.key));
         let mut child_reports: Vec<Report> = groups.iter().map(Self::report_ticket).collect();
         child_reports.sort_unstable_by(|a, b| a.category.cmp(&b.category));
 
         Report {
-            category: Category::Date(date.clone()),
+            category: Category::Date(date),
             overall_duration: Report::create_duration_sum(&child_reports),
             child_reports,
         }
@@ -170,10 +170,10 @@ impl ReportCreator<'_> {
             .fold(Duration::zero(), |d, e| d.add(e.to_duration()))
     }
 
-    fn group_by_key<'a, K: Eq + Hash>(
-        vec: &[&'a LogEntry],
+    fn group_by_key<K: Eq + Hash>(
+        vec: &[LogEntry],
         key_extractor: fn(&LogEntry) -> K,
-    ) -> GroupBy<'a, K> {
+    ) -> GroupBy<'_, K> {
         let mut result: HashMap<K, Vec<&LogEntry>> = HashMap::new();
 
         for entry in vec.iter() {
@@ -183,5 +183,114 @@ impl ReportCreator<'_> {
         }
 
         result
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{Datelike, TimeZone};
+    use spectral::assert_that;
+    use spectral::prelude::{VecAssertions, StrAssertions};
+    use std::collections::BTreeMap;
+    use std::iter::FromIterator;
+
+    #[test]
+    fn test_empty_log() {
+        let lg = TimeLog::new();
+        let rc = ReportCreator::new(&lg);
+        let today = Local::today();
+        let rep = rc.report_day(today);
+
+        assert!(matches!(rep.category, Category::Date(_)));
+        assert_eq!(rep.overall_duration, Duration::zero());
+        assert_that!(rep.child_reports).is_empty();
+    }
+
+    #[test]
+    fn test_sum_over_multiple_logs_for_same_ticket() {
+        let today = test_date().with_day(1).unwrap();
+        let tl = TimeLog::new_testing_only(BTreeMap::from_iter(vec![(
+            today.naive_local(),
+            vec![create_log(1, 30, "Foo"), create_log(1, 10, "Foo")],
+        )]));
+
+        let rc = ReportCreator::new(&tl);
+        let report = rc.report_day(today);
+
+        assert!(matches!(report.category, Category::Date(_)));
+        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(40));
+        assert_that!(report.child_reports).has_length(1);
+    }
+
+    #[test]
+    fn test_sum_over_multiple_logs_for_different_tickets() {
+        let today = test_date().with_day(1).unwrap();
+        let tl = TimeLog::new_testing_only(BTreeMap::from_iter(vec![(
+            today.naive_local(),
+            vec![create_log(1, 30, "Foo"), create_log(1, 10, "Bar")],
+        )]));
+
+        let rc = ReportCreator::new(&tl);
+        let report = rc.report_day(today);
+
+        assert!(matches!(report.category, Category::Date(_)));
+        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(40));
+        assert_that!(report.child_reports).has_length(2);
+    }
+
+    #[test]
+    fn test_sum_over_multiple_logs_for_different_days() {
+        let today = test_date().with_day(1).unwrap();
+        let tomorrow = test_date().with_day(2).unwrap();
+        let tl = tl_multiple_days(today, tomorrow);
+
+        let rc = ReportCreator::new(&tl);
+        let report = rc.report_days(tomorrow, 2,true);
+
+        assert!(matches!(report.category, Category::DateRange(_)));
+        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(50));
+        assert_that!(report.child_reports).has_length(2);
+    }
+
+    #[test]
+    fn test_display() {
+        let today = test_date().with_day(1).unwrap();
+        let tomorrow = test_date().with_day(2).unwrap();
+        let tl = tl_multiple_days(today, tomorrow);
+        let rc = ReportCreator::new(&tl);
+
+        let report = rc.report_days(tomorrow,2,true);
+        let r_string = report.to_string();
+
+        assert_that!(r_string).contains("Foo");
+        assert_that!(r_string).contains("Bar");
+        assert_that!(r_string).contains("[00h 30m]");
+        assert_that!(r_string).contains("[00h 10m]");
+    }
+
+    fn tl_multiple_days(today: Date<Local>, tomorrow: Date<Local>) -> TimeLog {
+        TimeLog::new_testing_only(BTreeMap::from_iter(vec![
+            (
+                today.naive_local(),
+                vec![create_log(1, 30, "Foo"), create_log(1, 10, "Bar")],
+            ),
+            (
+                tomorrow.naive_local(),
+                vec![create_log(2, 10, "Bar")],
+            ),
+        ]))
+    }
+
+    fn create_log(day: u32, dur: u32, name: &str) -> LogEntry {
+        LogEntry {
+            start: test_date().with_day(day).unwrap().and_hms(4, 0, 20),
+            end: test_date().with_day(day).unwrap().and_hms(4, dur, 20),
+            key: name.to_string(),
+        }
+    }
+
+    fn test_date() -> Date<Local> {
+        Local.ymd(2000, 1, 1)
     }
 }

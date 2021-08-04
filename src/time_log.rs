@@ -1,9 +1,10 @@
 use std::error::Error;
 
-use chrono::{Date, DateTime, Duration, Local};
+use chrono::{Date, DateTime, Duration, Local, NaiveDate};
 use serde::{Deserialize, Serialize};
 
 use crate::TrackieError;
+use std::collections::BTreeMap;
 
 type OptError = Result<Option<String>, Box<dyn Error>>;
 
@@ -37,19 +38,27 @@ impl LogEntry {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TimeLog {
     pending: Option<PendingLog>,
-    entries: Vec<LogEntry>,
+    entries: BTreeMap<NaiveDate, Vec<LogEntry>>,
 }
 
 impl TimeLog {
     pub fn new() -> TimeLog {
         TimeLog {
             pending: None,
-            entries: Vec::new(),
+            entries: BTreeMap::new(),
         }
     }
 
     pub fn from_json(content: &str) -> serde_json::Result<TimeLog> {
         serde_json::from_str(content)
+    }
+
+    #[cfg(test)]
+    pub fn new_testing_only(entries: BTreeMap<NaiveDate, Vec<LogEntry>>) -> TimeLog {
+        Self {
+            pending: None,
+            entries,
+        }
     }
 
     pub fn start_log(&mut self, key: &str) -> OptError {
@@ -70,7 +79,10 @@ impl TimeLog {
         if let Some(p) = &self.pending {
             let now = Local::now();
             let entry = LogEntry::from_time_log(p, now);
-            self.entries.push(entry);
+            self.entries
+                .entry(now.date().naive_local())
+                .or_default()
+                .push(entry);
             self.pending = None;
             Ok(None)
         } else {
@@ -80,11 +92,11 @@ impl TimeLog {
         }
     }
 
-    pub fn for_day(&self, date: Date<Local>) -> Vec<&LogEntry> {
+    pub fn for_day(&self, date: Date<Local>) -> &[LogEntry] {
         self.entries
-            .iter()
-            .filter(|e| e.start.date() == date)
-            .collect()
+            .get(&date.naive_local())
+            .map(|f| f.as_slice())
+            .unwrap_or(&[])
     }
 }
 
@@ -94,6 +106,7 @@ mod tests {
     use spectral::prelude::*;
 
     use super::*;
+    use std::iter::FromIterator;
 
     #[test]
     fn start_worklog_fresh() {
@@ -123,15 +136,49 @@ mod tests {
 
     #[test]
     fn filter_items_for_day() {
-        let lg = TimeLog {
-            pending: None,
-            entries: vec![create_log(1, 30, "Target"), create_log(2, 40, "Fail")],
-        };
+        let lg = create_tl_with_two_dates();
 
         let result = lg.for_day(test_date());
 
-        assert_that(&result).has_length(1);
-        assert_eq!(&result.get(0).unwrap().key, "Target")
+        assert_eq!(result.len(), 1);
+        assert_eq!(&result.get(0).unwrap().key, "Target");
+    }
+
+    #[test]
+    fn filter_items_for_day_empty_log() {
+        let lg = TimeLog::new();
+
+        let result = lg.for_day(test_date());
+
+        assert_eq!(result.len(), 0);
+    }
+
+    #[test]
+    fn test_serialization_empty() {
+        let l = TimeLog::new();
+        let result = serde_json::to_string(&l).unwrap();
+        assert_that!(result).contains("{}");
+
+        let deserialized: TimeLog = TimeLog::from_json(result.as_str()).unwrap();
+
+        assert_that!(deserialized.pending).is_none();
+        assert_that!(deserialized.entries.len()).is_equal_to(0);
+    }
+
+    fn create_tl_with_two_dates() -> TimeLog{
+        TimeLog {
+            pending: None,
+            entries: BTreeMap::from_iter(vec![
+                (
+                    test_date().with_day(1).unwrap().naive_local(),
+                    vec![create_log(1, 30, "Target")],
+                ),
+                (
+                    test_date().with_day(2).unwrap().naive_local(),
+                    vec![create_log(2, 40, "Target")],
+                ),
+            ]),
+        }
     }
 
     fn create_log(day: u32, dur: u32, name: &str) -> LogEntry {
@@ -143,6 +190,6 @@ mod tests {
     }
 
     fn test_date() -> Date<Local> {
-        Local.ymd(2000, 01, 01)
+        Local.ymd(2000, 1, 1)
     }
 }
