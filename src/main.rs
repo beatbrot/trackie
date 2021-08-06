@@ -12,8 +12,10 @@ use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::PathBuf;
+use crate::pretty_string::PrettyString;
 
 mod cli;
+mod pretty_string;
 mod report_creator;
 mod time_log;
 
@@ -36,13 +38,16 @@ fn run_app() -> Result<(), Box<dyn Error>> {
             if let Some(warn) = log.start_log(&p.project_name)? {
                 println!("{} {}", "WARN:".yellow(), warn);
             }
-            println!("Tracking time for project {}", p.project_name.as_str().italic());
+            println!(
+                "Tracking time for project {}",
+                p.project_name.as_str().italic()
+            );
         }
         Subcommand::Stop(_) => {
             modified = true;
-            if let Some(warn) = log.stop_pending()? {
-                println!("{} {}", "WARN:".yellow(), warn);
-            }
+            let pending = log.stop_pending()?;
+            let dur = pending.get_pending_duration();
+            println!("Tracked {} on project {}", dur.to_pretty_string().as_str().bold(), pending.project_name.as_str().italic())
         }
         Subcommand::Report(o) => {
             println!(
@@ -75,7 +80,7 @@ fn save_log(log: &TimeLog) -> Result<File, Box<dyn Error>> {
 }
 
 fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
-   let conf_file = config_file();
+    let conf_file = config_file();
     if conf_file.exists() {
         let content = read_to_string(conf_file)?;
         Ok(TimeLog::from_json(&content)?)
@@ -84,7 +89,7 @@ fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
     }
 }
 
-fn config_file() -> PathBuf{
+fn config_file() -> PathBuf {
     dirs::home_dir()
         .unwrap()
         .join(".config")
@@ -97,8 +102,10 @@ pub struct TrackieError {
 }
 
 impl TrackieError {
-    fn new(msg: String) -> TrackieError {
-        TrackieError { msg }
+    fn new(msg: &str) -> TrackieError {
+        TrackieError {
+            msg: msg.to_string(),
+        }
     }
 }
 

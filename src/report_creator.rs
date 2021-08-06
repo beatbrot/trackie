@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::ops::{Add, Range, Sub};
+use crate::pretty_string::PrettyString;
 
 type GroupBy<'a, K> = HashMap<K, Vec<&'a LogEntry>>;
 
@@ -24,10 +25,6 @@ pub struct Report {
 
 impl Display for Report {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        fn print_duration(dur: &Duration) -> String {
-            let remaining_min = dur.num_minutes() - (dur.num_hours() * 60);
-            format!("{:02}h {:02}m", dur.num_hours(), remaining_min)
-        }
         fn format(f: &mut Formatter, target: &Report, level: u32) -> std::fmt::Result {
             match level {
                 1 => writeln!(
@@ -36,14 +33,14 @@ impl Display for Report {
                     ARROW.green(),
                     target.category,
                     ' ',
-                    print_duration(&target.overall_duration)
+                    target.overall_duration.to_pretty_string()
                 )?,
                 2 => writeln!(
                     f,
                     "    {} {:<35} [{}]",
                     ARROW,
                     target.category.to_string().as_str().bold(),
-                    print_duration(&target.overall_duration)
+                    &target.overall_duration.to_pretty_string(),
                 )?,
                 _ => {}
             };

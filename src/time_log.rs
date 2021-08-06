@@ -8,10 +8,17 @@ use std::collections::BTreeMap;
 
 type OptError = Result<Option<String>, Box<dyn Error>>;
 
-#[derive(Debug, Serialize, Deserialize)]
-struct PendingLog {
-    project_name: String,
-    start: DateTime<Local>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PendingLog {
+    pub project_name: String,
+    pub start: DateTime<Local>,
+}
+
+impl PendingLog {
+    pub fn get_pending_duration(&self) -> Duration {
+        let now = Local::now();
+        now.signed_duration_since(self.start)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,7 +82,7 @@ impl TimeLog {
         Ok(warn)
     }
 
-    pub fn stop_pending(&mut self) -> OptError {
+    pub fn stop_pending(&mut self) -> Result<PendingLog, Box<dyn Error>> {
         if let Some(p) = &self.pending {
             let now = Local::now();
             let entry = LogEntry::from_time_log(p, now);
@@ -83,12 +90,11 @@ impl TimeLog {
                 .entry(now.date().naive_local())
                 .or_default()
                 .push(entry);
+            let result = p.clone();
             self.pending = None;
-            Ok(None)
+            Ok(result)
         } else {
-            Err(Box::new(TrackieError::new(
-                "No time is currently tracked.".to_string(),
-            )))
+            Err(Box::new(TrackieError::new("No time is currently tracked.")))
         }
     }
 
