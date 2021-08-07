@@ -85,7 +85,7 @@ fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
         let content = read_to_string(conf_file)?;
         Ok(TimeLog::from_json(&content)?)
     } else {
-        Ok(TimeLog::new())
+        Ok(TimeLog::default())
     }
 }
 

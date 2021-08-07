@@ -21,7 +21,7 @@ impl PendingLog {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct LogEntry {
     pub project_name: String,
     pub start: DateTime<Local>,
@@ -42,10 +42,16 @@ impl LogEntry {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct TimeLog {
     pending: Option<PendingLog>,
     entries: BTreeMap<NaiveDate, Vec<LogEntry>>,
+}
+
+impl Default for TimeLog{
+    fn default() -> Self {
+        TimeLog::new()
+    }
 }
 
 impl TimeLog {
@@ -94,7 +100,7 @@ impl TimeLog {
             self.pending = None;
             Ok(result)
         } else {
-            Err(Box::new(TrackieError::new("No time is currently tracked.")))
+            Err(TrackieError::new("No time is currently tracked.").into())
         }
     }
 

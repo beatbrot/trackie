@@ -1,3 +1,4 @@
+use crate::pretty_string::PrettyString;
 use crate::report_creator::Category::{DateRange, Project};
 use crate::time_log::{LogEntry, TimeLog};
 use chrono::{Date, Duration, Local};
@@ -7,7 +8,6 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::ops::{Add, Range, Sub};
-use crate::pretty_string::PrettyString;
 
 type GroupBy<'a, K> = HashMap<K, Vec<&'a LogEntry>>;
 
@@ -75,7 +75,7 @@ impl Ord for Category {
         match (self, other) {
             (Project(p1), Project(p2)) => p1.cmp(p2),
             (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
-            (DateRange(r1), DateRange(r2)) => r1.start.cmp(&r2.start),
+            (DateRange(r1), DateRange(r2)) => (r1.start,r1.end).cmp(&(r2.start, r2.end)),
             (Project(_), Category::Date(_) | DateRange(_)) | (Category::Date(_), DateRange(_)) => {
                 Ordering::Greater
             }
