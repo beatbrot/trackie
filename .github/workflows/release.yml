@@ -1,8 +1,9 @@
 name: Upload release binaries
 
 on:
+  workflow_dispatch:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   release:
