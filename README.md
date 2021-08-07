@@ -27,6 +27,11 @@ Trackie currently consists of three simple commands:
 
 ## Installation
 
-1. Clone this repository
-2. Enter its directory with a terminal
-3. Run `cargo install --path .`
+#### Download prebuilt release
+
+1. Download the binary for your respective OS from [the latest release](https://github.com/beatbrot/trackie/releases).
+2. Copy it to a folder in your `PATH`.
+
+#### Compile from source
+
+1. Run `cargo install trackie`.
