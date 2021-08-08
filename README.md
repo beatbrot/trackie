@@ -13,6 +13,8 @@
 
 Trackie offers an easy CLI to track the time you spent on your various projects. It bundles up your busy days in easy digestible reports that you can filter to your liking.
 
+All data is saved to `~/.config/trackie.json` where it can be processed by other tools.
+
 Trackie is optimized to lower its complexity to the absolute minimum.
 
 ---
