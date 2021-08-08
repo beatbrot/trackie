@@ -33,22 +33,25 @@ Trackie currently consists of three simple commands:
 
 Trackie's customizable `status` command is a great fit for many shells.
 
+
+### Starship 
+
 The following starship configuration, for example, leads to a nice element that shows on which project you are working
 on and for how long you are already doing that.
 
 ```toml
 [custom.trackie]
 command = 'trackie status -f "%p[%D]"'
+# Remove this line if you don't want to hide the trackie block if no project is currently tracked
 when = "trackie status"
-os = "linux"
 symbol = "⏳"
 style = "bg:cyan fg:black"
-format = "[$symbol($output)]($style)[](fg:cyan) "
+format = "[$symbol($output)]($style)[](fg:cyan)"
 ```
 
 This configuration leads to the following result:
 
-<div align="center">
+<div>
   <img src=".github/media/shell-integration-screenshot.png" alt="Windows Terminal with starship and trackie extension"/>
 </div>
 
