@@ -48,7 +48,9 @@ format = "[$symbol($output)]($style)[](fg:cyan) "
 
 This configuration leads to the following result:
 
-![Windows Terminal with starship and trackie extension](.github/media/shell-integration-screenshot.png)
+<div align="center">
+  <img src=".github/media/shell-integration-screenshot.png" alt="Windows Terminal with starship and trackie extension"/>
+</div>
 
 ## Installation
 
