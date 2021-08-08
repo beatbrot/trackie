@@ -4,7 +4,9 @@ use std::io::Write;
 
 use chrono::Local;
 
-use crate::cli::{Opts, Subcommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT};
+use crate::cli::{
+    Opts, Subcommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT, ENV_TRACKIE_CONFIG,
+};
 use crate::pretty_string::PrettyString;
 use crate::report_creator::ReportCreator;
 use crate::time_log::TimeLog;
@@ -117,10 +119,15 @@ fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
 }
 
 fn config_file() -> PathBuf {
-    dirs::home_dir()
+    std::env::var(ENV_TRACKIE_CONFIG)
+        .ok()
+        .map(Into::<PathBuf>::into)
+        .or_else(default_config_file)
         .unwrap()
-        .join(".config")
-        .join("trackie.json")
+}
+
+fn default_config_file() -> Option<PathBuf> {
+    dirs::home_dir().map(|i| i.join(".config").join("trackie.json"))
 }
 
 #[derive(Debug)]

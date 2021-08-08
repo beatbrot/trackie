@@ -2,6 +2,7 @@ use clap::{crate_authors, crate_version, Clap};
 
 pub const DEFAULT_STATUS_FORMAT: &str = "Tracking %p since %d (%t) [%D]";
 pub const DEFAULT_EMPTY_STATUS_MSG: &str = "Currently tracking no project.";
+pub const ENV_TRACKIE_CONFIG: &str = "TRACKIE_CONFIG";
 
 #[derive(Clap)]
 #[clap(author=crate_authors!(), version=crate_version!())]
@@ -39,7 +40,7 @@ pub struct StatusCommand {
 
     /// The message that gets printed to the console if no time is currently tracked.
     #[clap(long)]
-    pub fallback: Option<String>
+    pub fallback: Option<String>,
 }
 
 #[derive(Clap)]
