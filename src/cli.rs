@@ -1,5 +1,8 @@
 use clap::{crate_authors, crate_version, Clap};
 
+pub const DEFAULT_STATUS_FORMAT: &str = "Tracking %p since %d (%t) [%D]";
+pub const DEFAULT_EMPTY_STATUS_MSG: &str = "Currently tracking no project.";
+
 #[derive(Clap)]
 #[clap(author=crate_authors!(), version=crate_version!())]
 /// A simple, private, time tracking utility.
@@ -16,6 +19,27 @@ pub enum Subcommand {
     Stop(EmptyCommand),
     /// Creates a report for the logged times
     Report(ReportCommand),
+    /// Shows information about the currently tracked work log, if present
+    ///
+    /// The commands supports the following variables in its format strings (provided via -f):
+    ///     - %p: The name of the project
+    ///     - %d: The date on which the tracking started
+    ///     - %t: The time at which the tracking started
+    ///     - %D: The duration of the current tracking
+    ///
+    #[clap(verbatim_doc_comment)]
+    Status(StatusCommand),
+}
+
+#[derive(Clap)]
+pub struct StatusCommand {
+    /// A format string describing the output of the command.
+    #[clap(short, long)]
+    pub format: Option<String>,
+
+    /// The message that gets printed to the console if no time is currently tracked.
+    #[clap(long)]
+    pub fallback: Option<String>
 }
 
 #[derive(Clap)]

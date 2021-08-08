@@ -4,7 +4,8 @@ use std::io::Write;
 
 use chrono::Local;
 
-use crate::cli::{Opts, Subcommand};
+use crate::cli::{Opts, Subcommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT};
+use crate::pretty_string::PrettyString;
 use crate::report_creator::ReportCreator;
 use crate::time_log::TimeLog;
 use clap::Clap;
@@ -12,7 +13,6 @@ use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::PathBuf;
-use crate::pretty_string::PrettyString;
 
 mod cli;
 mod pretty_string;
@@ -23,6 +23,7 @@ fn main() {
     include_str!("../Cargo.toml");
     if let Err(e) = run_app() {
         eprintln!("{} {}", "ERROR:".red(), e);
+        std::process::exit(1);
     }
 }
 
@@ -47,7 +48,11 @@ fn run_app() -> Result<(), Box<dyn Error>> {
             modified = true;
             let pending = log.stop_pending()?;
             let dur = pending.get_pending_duration();
-            println!("Tracked {} on project {}", dur.to_pretty_string().as_str().bold(), pending.project_name.as_str().italic())
+            println!(
+                "Tracked {} on project {}",
+                dur.to_pretty_string().bold(),
+                pending.project_name.italic()
+            )
         }
         Subcommand::Report(o) => {
             println!(
@@ -55,6 +60,28 @@ fn run_app() -> Result<(), Box<dyn Error>> {
                 report_creator.report_days(Local::today(), o.days, o.include_empty_days)
             );
         }
+        Subcommand::Status(s) => match &log.pending {
+            None => {
+                let msg = s
+                    .fallback
+                    .unwrap_or_else(|| DEFAULT_EMPTY_STATUS_MSG.to_string());
+                println!("{}", msg);
+                std::process::exit(1);
+            }
+            Some(p) => {
+                let format = s
+                    .format
+                    .unwrap_or_else(|| DEFAULT_STATUS_FORMAT.to_string());
+
+                let output = format
+                    .replace("%p", p.project_name.as_str())
+                    .replace("%d", p.start.format("%F").to_string().as_str())
+                    .replace("%t", p.start.format("%R").to_string().as_str())
+                    .replace("%D", p.get_pending_duration().to_pretty_string().as_str());
+
+                println!("{}", output)
+            }
+        },
     }
 
     if modified {
