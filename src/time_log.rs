@@ -44,7 +44,7 @@ impl LogEntry {
 
 #[derive(Serialize, Deserialize)]
 pub struct TimeLog {
-    pending: Option<PendingLog>,
+    pub pending: Option<PendingLog>,
     entries: BTreeMap<NaiveDate, Vec<LogEntry>>,
 }
 

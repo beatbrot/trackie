@@ -27,6 +27,18 @@ Trackie currently consists of three simple commands:
 - `trackie stop`: Stops the time tracking
 - `trackie report [-d <num-days] [-i/--include-empty-days]`: Creates a report for the last *n* days (default: 5).
 
+## Starship integration
+
+```toml
+[custom.trackie]
+command = 'trackie status -f "%p[%D]"'
+when = "trackie status"
+os = "linux"
+symbol = "⏳"
+style = "bg:cyan fg:black"
+format = "[$symbol($output)]($style)[](fg:cyan) "
+```
+
 ## Installation
 
 #### Download prebuilt release
