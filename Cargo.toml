@@ -25,6 +25,9 @@ colored = "2"
 
 [dev-dependencies]
 spectral = "0.6"
+assert_cmd = "2"
+rand = "0.8"
+predicates = "2"
 
 [profile.release]
 lto = true
