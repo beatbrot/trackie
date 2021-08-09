@@ -1,0 +1,50 @@
+.TH TRACKIE 1 2021-08-09 "github.com/beatbrot/trackie/" "General Commands Manual"
+.
+.SH NAME
+.P
+trackie \- a private, daemon-less time tracker for your CLI
+.
+.
+.SH SYNOPSIS
+.SY trackie
+.OP command...
+.YS
+.
+.
+.SH DESCRIPTION
+.P
+Trackie offers an easy CLI to track the time you spent on your various projects.
+It bundles up your busy days in easy digestible reports that you can filter to
+your liking.
+.P
+All data is saved to \fB~/.config/trackie.json\fR where it can be processed by
+other tools.
+.P
+Trackie is optimized to lower its complexity to the absolute minimum.
+.
+.
+.SH COMMANDS
+.P
+\fBstart\fR \fIproject-ID\fR
+.RS
+Starts time tracking for a project with the given ID.
+.RE
+.
+.P
+\fBstop\fR
+.RS
+Stops the time tracking.
+.RE
+.
+.P
+\fBstatus\fR [\-f \fIformat\fR]
+.RS
+Prints information about the currently tracked project.
+.RE
+.
+.P
+\fBreport\fR [\-d \fInum-days\fR] [\-i/\-\-include-empty-days]
+.RS
+Creates a report for the last \fIn\fR days (default: 5).
+.RE
+.

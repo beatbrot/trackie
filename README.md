@@ -62,6 +62,16 @@ This configuration leads to the following result:
 1. Download the binary for your respective OS from [the latest release](https://github.com/beatbrot/trackie/releases).
 2. Copy it to a folder in your `PATH`.
 
-#### Compile from source
+#### Compile from source using cargo
 
 1. Run `cargo install trackie`.
+
+#### Compile from source using make
+
+```
+git clone https://github.com/beatbrot/trackie
+cd trackie
+make
+sudo make install
+```
+
