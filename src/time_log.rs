@@ -48,7 +48,7 @@ pub struct TimeLog {
     entries: BTreeMap<NaiveDate, Vec<LogEntry>>,
 }
 
-impl Default for TimeLog{
+impl Default for TimeLog {
     fn default() -> Self {
         TimeLog::new()
     }
@@ -109,6 +109,15 @@ impl TimeLog {
             .get(&date.naive_local())
             .map_or(&[], Vec::as_slice)
     }
+
+    /// Returns the [LogEntry] that was added last to the log.
+    pub fn get_latest_entry(&self) -> Option<&LogEntry> {
+        let max_date = self.entries.iter().max_by_key(|(k, _)| *k).map(|(_, v)| v);
+        match max_date {
+            Some(entries) => entries.iter().max_by_key(|e| e.end),
+            None => None,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -156,6 +165,19 @@ mod tests {
     }
 
     #[test]
+    fn get_latest_log() {
+        let lg = create_tl_with_two_dates();
+
+        let latest = lg.get_latest_entry();
+
+        assert!(latest.is_some());
+        if let Some(l) = latest {
+            assert_eq!(l.end.day(), 2);
+            assert_eq!(l.project_name, "Second");
+        }
+    }
+
+    #[test]
     fn filter_items_for_day_empty_log() {
         let lg = TimeLog::new();
 
@@ -186,7 +208,7 @@ mod tests {
                 ),
                 (
                     test_date().with_day(2).unwrap().naive_local(),
-                    vec![create_log(2, 40, "Target")],
+                    vec![create_log(2, 50, "Second"),create_log(2, 40, "First")],
                 ),
             ]),
         }
