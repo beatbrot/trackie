@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::fs::{create_dir_all, read_to_string, File, OpenOptions};
+use std::fs::{create_dir_all, read_to_string, File, OpenOptions, rename};
 use std::io::Write;
 
 use chrono::Local;
@@ -15,6 +15,7 @@ use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::PathBuf;
+use std::env;
 
 mod cli;
 mod pretty_string;
@@ -109,6 +110,7 @@ fn save_log(log: &TimeLog) -> Result<File, Box<dyn Error>> {
 }
 
 fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
+    move_legacy_config_file()?;
     let conf_file = config_file();
     if conf_file.exists() {
         let content = read_to_string(conf_file)?;
@@ -118,8 +120,27 @@ fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
     }
 }
 
+fn move_legacy_config_file() -> Result<(), Box<dyn Error>> {
+    if env::var(ENV_TRACKIE_CONFIG).is_ok() {
+       return Ok(());
+    }
+    let legacy_path = dirs::home_dir()
+        .unwrap()
+        .join(".config")
+        .join("trackie.json");
+
+    if legacy_path.is_file() {
+        eprintln!("Legacy data detected. Running migration...");
+        let new_path = config_file();
+        create_dir_all(new_path.parent().unwrap())?;
+        assert!(!new_path.exists(), "Failed migration detected. Please delete either {:?} or {:?}", legacy_path, new_path);
+        rename(legacy_path, new_path)?;
+    }
+    Ok(())
+}
+
 fn config_file() -> PathBuf {
-    std::env::var(ENV_TRACKIE_CONFIG)
+    env::var(ENV_TRACKIE_CONFIG)
         .ok()
         .map(Into::<PathBuf>::into)
         .or_else(default_config_file)
@@ -127,7 +148,7 @@ fn config_file() -> PathBuf {
 }
 
 fn default_config_file() -> Option<PathBuf> {
-    dirs::home_dir().map(|i| i.join(".config").join("trackie.json"))
+    dirs::data_dir().map(|i| i.join("trackie").join("trackie.json"))
 }
 
 #[derive(Debug)]
