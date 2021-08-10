@@ -75,7 +75,7 @@ impl Ord for Category {
         match (self, other) {
             (Project(p1), Project(p2)) => p1.cmp(p2),
             (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
-            (DateRange(r1), DateRange(r2)) => (r1.start,r1.end).cmp(&(r2.start, r2.end)),
+            (DateRange(r1), DateRange(r2)) => (r1.start, r1.end).cmp(&(r2.start, r2.end)),
             (Project(_), Category::Date(_) | DateRange(_)) | (Category::Date(_), DateRange(_)) => {
                 Ordering::Greater
             }
@@ -187,8 +187,6 @@ impl ReportCreator<'_> {
 mod tests {
     use super::*;
     use chrono::{Datelike, TimeZone};
-    use spectral::assert_that;
-    use spectral::prelude::{StrAssertions, VecAssertions};
     use std::collections::BTreeMap;
     use std::iter::FromIterator;
 
@@ -201,7 +199,7 @@ mod tests {
 
         assert!(matches!(rep.category, Category::Date(_)));
         assert_eq!(rep.overall_duration, Duration::zero());
-        assert_that!(rep.child_reports).is_empty();
+        assert!(rep.child_reports.is_empty());
     }
 
     #[test]
@@ -216,8 +214,8 @@ mod tests {
         let report = rc.report_day(today);
 
         assert!(matches!(report.category, Category::Date(_)));
-        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(40));
-        assert_that!(report.child_reports).has_length(1);
+        assert_eq!(report.overall_duration, Duration::minutes(40));
+        assert_eq!(report.child_reports.len(), 1);
     }
 
     #[test]
@@ -232,8 +230,8 @@ mod tests {
         let report = rc.report_day(today);
 
         assert!(matches!(report.category, Category::Date(_)));
-        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(40));
-        assert_that!(report.child_reports).has_length(2);
+        assert_eq!(report.overall_duration, Duration::minutes(40));
+        assert_eq!(report.child_reports.len(), 2);
     }
 
     #[test]
@@ -246,8 +244,8 @@ mod tests {
         let report = rc.report_days(tomorrow, 2, true);
 
         assert!(matches!(report.category, Category::DateRange(_)));
-        assert_that!(report.overall_duration).is_equal_to(Duration::minutes(50));
-        assert_that!(report.child_reports).has_length(2);
+        assert_eq!(report.overall_duration, Duration::minutes(50));
+        assert_eq!(report.child_reports.len(), 2);
     }
 
     #[test]
@@ -260,10 +258,10 @@ mod tests {
         let report = rc.report_days(tomorrow, 2, true);
         let r_string = report.to_string();
 
-        assert_that!(r_string).contains("Foo");
-        assert_that!(r_string).contains("Bar");
-        assert_that!(r_string).contains("[00h 30m]");
-        assert_that!(r_string).contains("[00h 10m]");
+        assert!(r_string.contains("Foo"));
+        assert!(r_string.contains("Bar"));
+        assert!(r_string.contains("[00h 30m]"));
+        assert!(r_string.contains("[00h 10m]"));
     }
 
     fn tl_multiple_days(today: Date<Local>, tomorrow: Date<Local>) -> TimeLog {

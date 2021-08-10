@@ -123,7 +123,6 @@ impl TimeLog {
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, TimeZone};
-    use spectral::prelude::*;
 
     use super::*;
     use std::iter::FromIterator;
@@ -133,7 +132,7 @@ mod tests {
         let mut l = TimeLog::new();
         let result = l.start_log("ABC").unwrap();
 
-        assert_that(&result).is_none();
+        assert!(result.is_none());
     }
 
     #[test]
@@ -143,7 +142,7 @@ mod tests {
 
         let result = l.start_log("DEF").unwrap();
 
-        assert_that(&result).is_some();
+        assert!(result.is_some());
     }
 
     #[test]
@@ -151,7 +150,7 @@ mod tests {
         let mut l = TimeLog::new();
         let result = l.stop_pending();
 
-        assert_that(&result).is_err();
+        assert!(result.is_err());
     }
 
     #[test]
@@ -190,12 +189,12 @@ mod tests {
     fn test_serialization_empty() {
         let l = TimeLog::new();
         let result = serde_json::to_string(&l).unwrap();
-        assert_that!(result).contains("{}");
+        assert!(result.contains("{}"));
 
         let deserialized: TimeLog = TimeLog::from_json(result.as_str()).unwrap();
 
-        assert_that!(deserialized.pending).is_none();
-        assert_that!(deserialized.entries.len()).is_equal_to(0);
+        assert!(deserialized.pending.is_none());
+        assert!(deserialized.entries.is_empty());
     }
 
     fn create_tl_with_two_dates() -> TimeLog {
