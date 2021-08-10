@@ -1,11 +1,9 @@
 use std::error::Error;
-use std::fs::{create_dir_all, read_to_string, File, OpenOptions, rename};
-use std::io::Write;
 
 use chrono::Local;
 
 use crate::cli::{
-    Opts, Subcommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT, ENV_TRACKIE_CONFIG,
+    Opts, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT
 };
 use crate::pretty_string::PrettyString;
 use crate::report_creator::ReportCreator;
@@ -14,13 +12,13 @@ use clap::Clap;
 use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
-use std::path::PathBuf;
-use std::env;
+use crate::persistence::{load_or_create_log, save_log};
 
 mod cli;
 mod pretty_string;
 mod report_creator;
 mod time_log;
+mod persistence;
 
 fn main() {
     include_str!("../Cargo.toml");
@@ -39,13 +37,7 @@ fn run_app() -> Result<(), Box<dyn Error>> {
     match o.sub_cmd {
         Subcommand::Start(p) => {
             modified = true;
-            if let Some(warn) = log.start_log(&p.project_name)? {
-                println!("{} {}", "WARN:".yellow(), warn);
-            }
-            println!(
-                "Tracking time for project {}",
-                p.project_name.as_str().italic()
-            );
+            start_tracking(&mut log, p)?;
         }
         Subcommand::Stop(_) => {
             modified = true;
@@ -85,6 +77,24 @@ fn run_app() -> Result<(), Box<dyn Error>> {
                 println!("{}", output)
             }
         },
+        Subcommand::Resume(_) => match (&log.pending, log.get_latest_entry()) {
+            (None, Some(s)) => {
+                modified = true;
+                let name = s.project_name.clone();
+                start_tracking(
+                    &mut log,
+                    TimingCommand {
+                        project_name: name,
+                    },
+                )?;
+            }
+            (Some(p), _) => {
+                return Err(TrackieError::new(format!("Already tracking time for project {}", p.project_name).as_str()).into())
+            }
+            (_, None) => {
+                return Err(TrackieError::new("Unable to find latest time log. Maybe no time was ever tracked?").into());
+            }
+        },
     }
 
     if modified {
@@ -94,61 +104,15 @@ fn run_app() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn save_log(log: &TimeLog) -> Result<File, Box<dyn Error>> {
-    let conf_file = config_file();
-    create_dir_all(&conf_file.parent().unwrap())?;
-
-    let mut f = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(conf_file)?;
-
-    serde_json::to_writer(&f, log)?;
-    f.flush()?;
-    Ok(f)
-}
-
-fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
-    move_legacy_config_file()?;
-    let conf_file = config_file();
-    if conf_file.exists() {
-        let content = read_to_string(conf_file)?;
-        Ok(TimeLog::from_json(&content)?)
-    } else {
-        Ok(TimeLog::default())
+fn start_tracking(log: &mut TimeLog, p: TimingCommand) -> Result<(), Box<dyn Error>> {
+    if let Some(warn) = log.start_log(&p.project_name)? {
+        println!("{} {}", "WARN:".yellow(), warn);
     }
-}
-
-fn move_legacy_config_file() -> Result<(), Box<dyn Error>> {
-    if env::var(ENV_TRACKIE_CONFIG).is_ok() {
-       return Ok(());
-    }
-    let legacy_path = dirs::home_dir()
-        .unwrap()
-        .join(".config")
-        .join("trackie.json");
-
-    if legacy_path.is_file() {
-        eprintln!("Legacy data detected. Running migration...");
-        let new_path = config_file();
-        create_dir_all(new_path.parent().unwrap())?;
-        assert!(!new_path.exists(), "Failed migration detected. Please delete either {:?} or {:?}", legacy_path, new_path);
-        rename(legacy_path, new_path)?;
-    }
+    println!(
+        "Tracking time for project {}",
+        p.project_name.as_str().italic()
+    );
     Ok(())
-}
-
-fn config_file() -> PathBuf {
-    env::var(ENV_TRACKIE_CONFIG)
-        .ok()
-        .map(Into::<PathBuf>::into)
-        .or_else(default_config_file)
-        .unwrap()
-}
-
-fn default_config_file() -> Option<PathBuf> {
-    dirs::data_dir().map(|i| i.join("trackie").join("trackie.json"))
 }
 
 #[derive(Debug)]

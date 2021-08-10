@@ -30,6 +30,9 @@ pub enum Subcommand {
     ///
     #[clap(verbatim_doc_comment)]
     Status(StatusCommand),
+    /// Resumes time tracking for the last tracked project.
+    #[clap(visible_alias="rs")]
+    Resume(EmptyCommand),
 }
 
 #[derive(Clap)]
