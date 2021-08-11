@@ -26,6 +26,7 @@ Trackie currently consists of three simple commands:
 
 - `trackie start <project-ID>`: Starts time tracking for a project with the given ID.
 - `trackie stop`: Stops the time tracking
+- `trackie resume`: 
 - `trackie status [-f <format>]`: Prints information about the currently tracked project.
 - `trackie report [-d <num-days>] [-i/--include-empty-days]`: Creates a report for the last *n* days (default: 5).
 

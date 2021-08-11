@@ -48,7 +48,7 @@ pub struct TimeLog {
     entries: BTreeMap<NaiveDate, Vec<LogEntry>>,
 }
 
-impl Default for TimeLog{
+impl Default for TimeLog {
     fn default() -> Self {
         TimeLog::new()
     }
@@ -109,12 +109,20 @@ impl TimeLog {
             .get(&date.naive_local())
             .map_or(&[], Vec::as_slice)
     }
+
+    /// Returns the [LogEntry] that was added last to the log.
+    pub fn get_latest_entry(&self) -> Option<&LogEntry> {
+        let max_date = self.entries.iter().max_by_key(|(k, _)| *k).map(|(_, v)| v);
+        match max_date {
+            Some(entries) => entries.iter().max_by_key(|e| e.end),
+            None => None,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use chrono::{Datelike, TimeZone};
-    use spectral::prelude::*;
 
     use super::*;
     use std::iter::FromIterator;
@@ -124,7 +132,7 @@ mod tests {
         let mut l = TimeLog::new();
         let result = l.start_log("ABC").unwrap();
 
-        assert_that(&result).is_none();
+        assert!(result.is_none());
     }
 
     #[test]
@@ -134,7 +142,7 @@ mod tests {
 
         let result = l.start_log("DEF").unwrap();
 
-        assert_that(&result).is_some();
+        assert!(result.is_some());
     }
 
     #[test]
@@ -142,7 +150,7 @@ mod tests {
         let mut l = TimeLog::new();
         let result = l.stop_pending();
 
-        assert_that(&result).is_err();
+        assert!(result.is_err());
     }
 
     #[test]
@@ -153,6 +161,19 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         assert_eq!(&result.get(0).unwrap().project_name, "Target");
+    }
+
+    #[test]
+    fn get_latest_log() {
+        let lg = create_tl_with_two_dates();
+
+        let latest = lg.get_latest_entry();
+
+        assert!(latest.is_some());
+        if let Some(l) = latest {
+            assert_eq!(l.end.day(), 2);
+            assert_eq!(l.project_name, "Second");
+        }
     }
 
     #[test]
@@ -168,12 +189,12 @@ mod tests {
     fn test_serialization_empty() {
         let l = TimeLog::new();
         let result = serde_json::to_string(&l).unwrap();
-        assert_that!(result).contains("{}");
+        assert!(result.contains("{}"));
 
         let deserialized: TimeLog = TimeLog::from_json(result.as_str()).unwrap();
 
-        assert_that!(deserialized.pending).is_none();
-        assert_that!(deserialized.entries.len()).is_equal_to(0);
+        assert!(deserialized.pending.is_none());
+        assert!(deserialized.entries.is_empty());
     }
 
     fn create_tl_with_two_dates() -> TimeLog {
@@ -186,7 +207,7 @@ mod tests {
                 ),
                 (
                     test_date().with_day(2).unwrap().naive_local(),
-                    vec![create_log(2, 40, "Target")],
+                    vec![create_log(2, 50, "Second"),create_log(2, 40, "First")],
                 ),
             ]),
         }
