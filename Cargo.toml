@@ -27,6 +27,11 @@ colored = "2"
 assert_cmd = "2"
 rand = "0.8"
 predicates = "2"
+bencher = "0.1"
+
+[[bench]]
+name = "perf_test"
+harness = false
 
 [profile.release]
 lto = true

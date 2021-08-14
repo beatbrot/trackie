@@ -23,6 +23,8 @@ jobs:
       run: cargo build --release
     - name: Run tests
       run: cargo test --verbose
+    - name: Run Benchmarks
+      run: cargo bench
     - name: Publish artifact
       uses: actions/upload-artifact@v2.2.4
       with:
