@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use rand::Rng;
+use std::error::Error;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -11,7 +12,7 @@ fn test_error_if_no_args() {
         .stderr(predicates::str::contains("report"))
         .stderr(predicates::str::contains("start"))
         .stderr(predicates::str::contains("stop"))
-        .failure();
+        .success();
 }
 
 #[test]
@@ -46,6 +47,19 @@ fn test_status_format() {
         .arg("%p")
         .assert()
         .stdout("foo\n");
+}
+
+#[test]
+fn test_report_json_output() -> Result<(), Box<dyn Error>> {
+    let t = TestDirectory::create();
+
+    cmd(&t).arg("start").arg("foo").ok()?;
+    cmd(&t).arg("stop").ok()?;
+
+    let out = String::from_utf8(cmd(&t).arg("report").arg("--json").output()?.stdout)?;
+    assert!(out.contains("{"));
+    assert!(out.contains("}"));
+    Ok(())
 }
 
 fn cmd(td: &TestDirectory) -> Command {

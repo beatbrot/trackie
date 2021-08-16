@@ -1,9 +1,8 @@
 use crate::pretty_string::PrettyString;
-use crate::report_creator::Category::{DateRange, Project};
 use crate::time_log::{LogEntry, TimeLog};
-use chrono::{Date, Duration, Local};
+use chrono::{Date, Duration, Local, NaiveDate};
 use colored::Colorize;
-use std::cmp::Ordering;
+use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
@@ -17,99 +16,91 @@ pub struct ReportCreator<'a> {
     time_log: &'a TimeLog,
 }
 
-pub struct Report {
-    pub category: Category,
-    pub overall_duration: Duration,
-    pub child_reports: Vec<Report>,
+#[derive(Serialize)]
+pub struct DateRangeReport {
+    pub range: Range<NaiveDate>,
+    #[serde(serialize_with = "serialize_duration", rename = "total")]
+    pub total_duration: Duration,
+    pub days: Vec<DayReport>,
 }
 
-impl Display for Report {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        fn format(f: &mut Formatter, target: &Report, level: u32) -> std::fmt::Result {
-            match level {
-                1 => writeln!(
-                    f,
-                    "{} {}{:<25}[{}]",
-                    ARROW.green(),
-                    target.category,
-                    ' ',
-                    target.overall_duration.to_pretty_string()
-                )?,
-                2 => writeln!(
-                    f,
-                    "    {} {:<35} [{}]",
-                    ARROW,
-                    target.category.to_string().as_str().bold(),
-                    &target.overall_duration.to_pretty_string(),
-                )?,
-                _ => {}
-            };
-
-            for c in &target.child_reports {
-                format(f, c, level + 1)?;
-            }
-            Ok(())
+impl DateRangeReport{
+    fn new(range: Range<Date<Local>>, days: Vec<DayReport>) ->Self{
+        Self{
+            range: range.start.naive_local()..range.end.naive_local(),
+            total_duration: days.iter().map(|r|r.total_duration).fold(Duration::zero(), |a,b|a.add(b)),
+            days
         }
+    }
+}
 
-        format(f, self, 0)?;
+impl Display for DateRangeReport {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.days.iter().try_for_each(|i| i.fmt(f))?;
         Ok(())
     }
 }
 
-impl Report {
-    fn create_duration_sum(reports: &[Report]) -> Duration {
-        reports
-            .iter()
-            .fold(Duration::zero(), |d, r| d.add(r.overall_duration))
-    }
+#[derive(Serialize)]
+pub struct DayReport {
+    pub date: NaiveDate,
+    #[serde(serialize_with = "serialize_duration", rename = "total")]
+    pub total_duration: Duration,
+    pub projects: Vec<ProjectReport>,
 }
 
-pub enum Category {
-    Project(String),
-    Date(Date<Local>),
-    DateRange(Range<Date<Local>>),
-}
-
-impl Ord for Category {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Project(p1), Project(p2)) => p1.cmp(p2),
-            (Category::Date(d1), Category::Date(d2)) => d1.cmp(d2),
-            (DateRange(r1), DateRange(r2)) => (r1.start, r1.end).cmp(&(r2.start, r2.end)),
-            (Project(_), Category::Date(_) | DateRange(_)) | (Category::Date(_), DateRange(_)) => {
-                Ordering::Greater
-            }
-            (DateRange(_), Category::Date(_) | Project(_)) | (Category::Date(_), Project(_)) => {
-                Ordering::Less
-            }
+impl DayReport {
+    fn new(date: NaiveDate, projects: Vec<ProjectReport>) -> Self {
+        Self {
+            date,
+            total_duration: projects
+                .iter()
+                .map(|p| p.duration)
+                .fold(Duration::zero(), |a, b| a.add(b)),
+            projects,
         }
     }
 }
 
-impl Eq for Category {}
-
-impl PartialEq for Category {
-    fn eq(&self, other: &Self) -> bool {
-        self.cmp(other) == Ordering::Equal
-    }
-}
-
-impl PartialOrd for Category {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Display for Category {
+impl Display for DayReport {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Category::Project(t) => write!(f, "{}", t),
-            Category::Date(d) => write!(f, "{}", d.format("%a. %F")),
-            Category::DateRange(r) => {
-                write!(f, "{} to {}", r.start.format("%F"), r.end.format("%F"))
-            }
-        }
+        writeln!(
+            f,
+            "{} {}{:<25}[{}]",
+            ARROW.green(),
+            self.date.format("%a. %F"),
+            ' ',
+            self.total_duration.to_pretty_string()
+        )?;
+        self.projects.iter().try_for_each(|p| p.fmt(f))?;
+        Ok(())
     }
+}
+
+#[derive(Serialize)]
+pub struct ProjectReport {
+    pub project: String,
+    #[serde(serialize_with = "serialize_duration")]
+    pub duration: Duration,
+}
+
+impl Display for ProjectReport {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(
+            f,
+            "    {} {:<35} [{}]",
+            ARROW,
+            self.project.as_str().bold(),
+            self.duration.to_pretty_string(),
+        )
+    }
+}
+
+fn serialize_duration<S>(d: &Duration, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_i64(d.num_minutes())
 }
 
 impl ReportCreator<'_> {
@@ -117,10 +108,15 @@ impl ReportCreator<'_> {
         ReportCreator { time_log }
     }
 
-    pub fn report_days(&self, date: Date<Local>, days: u32, include_empty_days: bool) -> Report {
+    pub fn report_days(
+        &self,
+        date: Date<Local>,
+        days: u32,
+        include_empty_days: bool,
+    ) -> DateRangeReport {
         let start_date = date.sub(Duration::days(i64::from(days) - 1));
 
-        let mut child_reports: Vec<Report> = Vec::new();
+        let mut child_reports: Vec<DayReport> = Vec::new();
         let mut curr_date: Date<Local> = start_date;
         loop {
             if !self.time_log.for_day(curr_date).is_empty() || include_empty_days {
@@ -132,33 +128,24 @@ impl ReportCreator<'_> {
             curr_date = curr_date.succ();
         }
 
-        Report {
-            category: Category::DateRange(start_date..date),
-            overall_duration: Report::create_duration_sum(&child_reports),
-            child_reports,
-        }
+        DateRangeReport::new(start_date..date, child_reports)
     }
 
-    pub fn report_day(&self, date: Date<Local>) -> Report {
+    pub fn report_day(&self, date: Date<Local>) -> DayReport {
         let log = self.time_log.for_day(date);
 
         let groups = Self::group_by_key(log, |i| String::from(&i.project_name));
-        let mut child_reports: Vec<Report> = groups.iter().map(Self::report_project).collect();
-        child_reports.sort_unstable_by(|a, b| a.category.cmp(&b.category));
+        let mut projects: Vec<ProjectReport> = groups.iter().map(Self::report_project).collect();
+        projects.sort_unstable_by(|a, b| a.project.cmp(&b.project));
 
-        Report {
-            category: Category::Date(date),
-            overall_duration: Report::create_duration_sum(&child_reports),
-            child_reports,
-        }
+        DayReport::new(date.naive_local(), projects)
     }
 
-    fn report_project(tuple: (&String, &Vec<&LogEntry>)) -> Report {
+    fn report_project(tuple: (&String, &Vec<&LogEntry>)) -> ProjectReport {
         let (name, entries) = tuple;
-        Report {
-            category: Category::Project(name.to_string()),
-            overall_duration: Self::sum_time(entries),
-            child_reports: Vec::new(),
+        ProjectReport {
+            duration: Self::sum_time(entries),
+            project: name.to_string(),
         }
     }
 
@@ -197,9 +184,8 @@ mod tests {
         let today = Local::today();
         let rep = rc.report_day(today);
 
-        assert!(matches!(rep.category, Category::Date(_)));
-        assert_eq!(rep.overall_duration, Duration::zero());
-        assert!(rep.child_reports.is_empty());
+        assert_eq!(rep.total_duration, Duration::zero());
+        assert!(rep.projects.is_empty());
     }
 
     #[test]
@@ -213,9 +199,8 @@ mod tests {
         let rc = ReportCreator::new(&tl);
         let report = rc.report_day(today);
 
-        assert!(matches!(report.category, Category::Date(_)));
-        assert_eq!(report.overall_duration, Duration::minutes(40));
-        assert_eq!(report.child_reports.len(), 1);
+        assert_eq!(report.total_duration, Duration::minutes(40));
+        assert_eq!(report.projects.len(), 1);
     }
 
     #[test]
@@ -229,9 +214,8 @@ mod tests {
         let rc = ReportCreator::new(&tl);
         let report = rc.report_day(today);
 
-        assert!(matches!(report.category, Category::Date(_)));
-        assert_eq!(report.overall_duration, Duration::minutes(40));
-        assert_eq!(report.child_reports.len(), 2);
+        assert_eq!(report.total_duration, Duration::minutes(40));
+        assert_eq!(report.projects.len(), 2);
     }
 
     #[test]
@@ -243,9 +227,8 @@ mod tests {
         let rc = ReportCreator::new(&tl);
         let report = rc.report_days(tomorrow, 2, true);
 
-        assert!(matches!(report.category, Category::DateRange(_)));
-        assert_eq!(report.overall_duration, Duration::minutes(50));
-        assert_eq!(report.child_reports.len(), 2);
+        assert_eq!(report.total_duration, Duration::minutes(50));
+        assert_eq!(report.days.len(), 2);
     }
 
     #[test]

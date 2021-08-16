@@ -28,7 +28,7 @@ Trackie currently consists of three simple commands:
 - `trackie stop`: Stops the time tracking.
 - `trackie resume`: Resumes time tracking for the last tracked project.
 - `trackie status [-f <format>]`: Prints information about the currently tracked project.
-- `trackie report [-d <num-days>] [-i/--include-empty-days]`: Creates a report for the last *n* days (default: 5).
+- `trackie report [-d <num-days>] [-i/--include-empty-days] [--json]`: Creates a report for the last *n* days (default: 5).
 
 ## Shell integration
 

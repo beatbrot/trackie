@@ -64,4 +64,8 @@ pub struct ReportCommand {
     /// Includes days without logged work in the report.
     #[clap(short, long)]
     pub include_empty_days: bool,
+
+    /// Dump report as JSON
+    #[clap(long)]
+    pub json: bool
 }
