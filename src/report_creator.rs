@@ -66,9 +66,9 @@ impl Display for DayReport {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(
             f,
-            "{} {}{:<30}[{}]",
+            "{} {}{:<25}[{}]",
             ARROW.green(),
-            self.date,
+            self.date.format("%a. %F"),
             ' ',
             self.total_duration.to_pretty_string()
         )?;
