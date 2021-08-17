@@ -43,7 +43,7 @@ on and for how long you are already doing that.
 ```toml
 [custom.trackie]
 command = 'trackie status -f "%p[%D]"'
-# Remove this line if you don't want to hide the trackie block if no project is currently tracked
+# Comment the following line if you don't want to hide the trackie block if no project is currently tracked
 when = "trackie status"
 symbol = "⏳"
 style = "bg:cyan fg:black"
@@ -55,6 +55,24 @@ This configuration leads to the following result:
 <div>
   <img src=".github/media/shell-integration-screenshot.png" alt="Windows Terminal with starship and trackie extension"/>
 </div>
+
+<details>
+<summary>
+  Use the following config to get better performance when using powershell
+</summary>
+  
+```toml
+[custom.trackie]
+command = ''
+shell = ["cmd.exe", "/C", "trackie status -f %p[%D]"]
+# Comment the following line if you don't want to hide the trackie block if no project is currently tracked
+when = "trackie status"
+symbol = "⏳"
+style = "bg:cyan fg:black"
+format = "[$symbol($output)]($style)[](fg:cyan)"
+```
+
+</details>
 
 ## Installation
 
