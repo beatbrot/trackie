@@ -74,6 +74,24 @@ format = "[$symbol($output)]($style)[](fg:cyan)"
 
 </details>
 
+### Oh My Posh
+
+To get an equivalent prompt with "Oh my Posh", use the following `segement` code in your config file.
+
+```json
+{
+  "type": "command",
+  "style": "powerline",
+  "foreground": "#100e23",
+  "powerline_symbol": "\uE0B0",
+  "background": "cyan",
+  "properties": {
+    "prefix": "⏳",
+    "command": "/root/trackie status -f %p[%D]"
+  }
+}
+```
+
 ## Installation
 
 #### Download prebuilt release
