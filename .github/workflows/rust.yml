@@ -32,7 +32,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         args: --all-features
     - name: Run tests
-      uses: actions-rs/tarpaulin@v1
+      uses: actions-rs/tarpaulin@v0.1
     - name: Upload to codecov
       uses: codecov/codecov-action@v2
       with:
