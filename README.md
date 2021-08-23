@@ -6,7 +6,7 @@
 
 
 <div align="center">
-<a href="https://asciinema.org/a/429400" target="_blank"><img src=".github/media/terminal-session.gif" width="90%" align="center"/></a>
+<img src=".github/media/terminal-session.gif" align="center"/>
 </div>
 
 ---
@@ -43,7 +43,7 @@ on and for how long you are already doing that.
 ```toml
 [custom.trackie]
 command = 'trackie status -f "%p[%D]"'
-# Remove this line if you don't want to hide the trackie block if no project is currently tracked
+# Comment the following line if you don't want to hide the trackie block if no project is currently tracked
 when = "trackie status"
 symbol = "⏳"
 style = "bg:cyan fg:black"
@@ -55,6 +55,42 @@ This configuration leads to the following result:
 <div>
   <img src=".github/media/shell-integration-screenshot.png" alt="Windows Terminal with starship and trackie extension"/>
 </div>
+
+<details>
+<summary>
+  Use the following config to get better performance when using powershell
+</summary>
+  
+```toml
+[custom.trackie]
+command = ''
+shell = ["cmd.exe", "/C", "trackie status -f %p[%D]"]
+# Comment the following line if you don't want to hide the trackie block if no project is currently tracked
+when = "trackie status"
+symbol = "⏳"
+style = "bg:cyan fg:black"
+format = "[$symbol($output)]($style)[](fg:cyan)"
+```
+
+</details>
+
+### Oh My Posh
+
+To get an equivalent prompt with "Oh my Posh", use the following `segement` code in your config file.
+
+```json
+{
+  "type": "command",
+  "style": "powerline",
+  "foreground": "#100e23",
+  "powerline_symbol": "\uE0B0",
+  "background": "cyan",
+  "properties": {
+    "prefix": "⏳",
+    "command": "/root/trackie status -f %p[%D]"
+  }
+}
+```
 
 ## Installation
 

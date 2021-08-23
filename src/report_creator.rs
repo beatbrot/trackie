@@ -6,7 +6,7 @@ use serde::{Serialize, Serializer};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use std::ops::{Add, Range, Sub};
+use std::ops::{Add, Range};
 
 type GroupBy<'a, K> = HashMap<K, Vec<&'a LogEntry>>;
 
@@ -24,12 +24,15 @@ pub struct DateRangeReport {
     pub days: Vec<DayReport>,
 }
 
-impl DateRangeReport{
-    fn new(range: Range<Date<Local>>, days: Vec<DayReport>) ->Self{
-        Self{
+impl DateRangeReport {
+    fn new(range: Range<Date<Local>>, days: Vec<DayReport>) -> Self {
+        Self {
             range: range.start.naive_local()..range.end.naive_local(),
-            total_duration: days.iter().map(|r|r.total_duration).fold(Duration::zero(), |a,b|a.add(b)),
-            days
+            total_duration: days
+                .iter()
+                .map(|r| r.total_duration)
+                .fold(Duration::zero(), |a, b| a.add(b)),
+            days,
         }
     }
 }
@@ -114,16 +117,13 @@ impl ReportCreator<'_> {
         days: u32,
         include_empty_days: bool,
     ) -> DateRangeReport {
-        let start_date = date.sub(Duration::days(i64::from(days) - 1));
+        let start_date: Date<Local> = date - Duration::days(days as i64 - 1);
 
         let mut child_reports: Vec<DayReport> = Vec::new();
         let mut curr_date: Date<Local> = start_date;
-        loop {
+        while curr_date <= date {
             if !self.time_log.for_day(curr_date).is_empty() || include_empty_days {
                 child_reports.push(self.report_day(curr_date));
-            }
-            if curr_date == date {
-                break;
             }
             curr_date = curr_date.succ();
         }
@@ -201,6 +201,23 @@ mod tests {
 
         assert_eq!(report.total_duration, Duration::minutes(40));
         assert_eq!(report.projects.len(), 1);
+    }
+
+    #[test]
+    fn test_report_days_number() {
+        let today = test_date().with_day(1).unwrap();
+        let tl = TimeLog::new_testing_only(BTreeMap::from_iter(vec![(
+            today.naive_local(),
+            vec![create_log(1, 30, "Foo")],
+        )]));
+
+        let rc = ReportCreator::new(&tl);
+
+        let empty_rep = rc.report_days(today, 0, true);
+        assert_eq!(empty_rep.days.len(), 0);
+
+        let single_day_rep = rc.report_days(today, 1, true);
+        assert_eq!(single_day_rep.days.len(), 1);
     }
 
     #[test]
