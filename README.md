@@ -6,7 +6,7 @@
 
 
 <div align="center">
-<a href="https://asciinema.org/a/429400" target="_blank"><img src=".github/media/terminal-session.gif" width="90%" align="center"/></a>
+<a href="https://asciinema.org/a/429400" target="_blank"><img src=".github/media/terminal-session.gif" align="center"/></a>
 </div>
 
 ---
