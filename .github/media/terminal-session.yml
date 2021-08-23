@@ -1,0 +1,261 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+
+  cwd: /home/beatbrot
+  
+  # Export additional ENV variables
+  env:
+    recording: true
+  
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 80
+  
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 13
+  
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+  
+  # Quality
+  # 1 - 100
+  quality: 100
+  
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+  
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 2000
+  
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: floating
+    title: trackie
+    style:
+      border: 0px black solid
+      # boxShadow: none
+      # margin: 0px
+  
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+  
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+  
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Cascadia Code PL"
+  
+  # The size of the font
+  fontSize: 16
+  
+  # The height of lines
+  lineHeight: 1
+  
+  # The spacing between letters
+  letterSpacing: 0
+  
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#F8F8F2"
+    cursor: "#F8F8F2"
+    black: "#21222C"
+    red: "#FF5555"
+    green: "#50FA7B"
+    yellow: "#F1FA8C"
+    blue: "#BD93F9"
+    magenta: "#ae89fe"
+    cyan: "#8BE9FD"
+    white: "#F8F8F2"
+    brightBlack: "#6272A4"
+    brightRed: "#FF6E6E"
+    brightGreen: "#69FF94"
+    brightYellow: "#FFFFA5"
+    brightBlue: "#D6ACFF"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#A4FFFF"
+    brightWhite: "#FFFFFF"
+  
+# Records, feel free to edit them
+records:
+  - delay: 0
+    content: "\e[1;36m~\e[0m \e[1;32m❯\e[0m "
+  - delay: 688
+    content: t
+  - delay: 176
+    content: r
+  - delay: 86
+    content: a
+  - delay: 136
+    content: c
+  - delay: 79
+    content: k
+  - delay: 129
+    content: i
+  - delay: 88
+    content: e
+  - delay: 95
+    content: ' '
+  - delay: 108
+    content: s
+  - delay: 165
+    content: t
+  - delay: 220
+    content: a
+  - delay: 75
+    content: r
+  - delay: 194
+    content: t
+  - delay: 72
+    content: ' '
+  - delay: 194
+    content: m
+  - delay: 202
+    content: 'y'
+  - delay: 178
+    content: '-'
+  - delay: 104
+    content: a
+  - delay: 130
+    content: p
+  - delay: 157
+    content: p
+  - delay: 203
+    content: "\r\nTracking time for project \e[3mmy-app\e[0m\r\n"
+  - delay: 20
+    content: "\r\n\e[46;30m⏳ \e[0m\e[46;30mmy-app[00h 00m]\e[0m\e[36m\e[0m \e[1;36m~\e[0m \e[1;32m❯\e[0m "
+  - delay: 820
+    content: '#'
+  - delay: 170
+    content: ' '
+  - delay: 301
+    content: A
+  - delay: 174
+    content: ' '
+  - delay: 160
+    content: f
+  - delay: 189
+    content: e
+  - delay: 85
+    content: w
+  - delay: 89
+    content: ' '
+  - delay: 197
+    content: h
+  - delay: 173
+    content: o
+  - delay: 176
+    content: u
+  - delay: 84
+    content: r
+  - delay: 160
+    content: s
+  - delay: 103
+    content: ' '
+  - delay: 144
+    content: l
+  - delay: 111
+    content: a
+  - delay: 191
+    content: t
+  - delay: 88
+    content: e
+  - delay: 140
+    content: r
+  - delay: 238
+    content: .
+  - delay: 178
+    content: .
+  - delay: 253
+    content: .
+  - delay: 536
+    content: "\r\n"
+  - delay: 20
+    content: "\r\n\e[46;30m⏳ \e[0m\e[46;30mmy-app[03h 36m]\e[0m\e[36m\e[0m \e[1;36m~\e[0m \e[1;32m❯\e[0m "
+  - delay: 545
+    content: t
+  - delay: 169
+    content: r
+  - delay: 108
+    content: a
+  - delay: 141
+    content: c
+  - delay: 108
+    content: k
+  - delay: 123
+    content: i
+  - delay: 141
+    content: e
+  - delay: 95
+    content: ' '
+  - delay: 129
+    content: s
+  - delay: 152
+    content: t
+  - delay: 75
+    content: o
+  - delay: 183
+    content: p
+  - delay: 236
+    content: "\r\n"
+  - delay: 5
+    content: "Tracked \e[1m03h 36m\e[0m on project \e[3mmy-app\e[0m\r\n"
+  - delay: 18
+    content: "\r\n\e[1;36m~\e[0m \e[1;32m❯\e[0m "
+  - delay: 500
+    content: t
+  - delay: 153
+    content: r
+  - delay: 146
+    content: a
+  - delay: 144
+    content: c
+  - delay: 106
+    content: k
+  - delay: 98
+    content: i
+  - delay: 105
+    content: e
+  - delay: 67
+    content: ' '
+  - delay: 100
+    content: r
+  - delay: 161
+    content: e
+  - delay: 119
+    content: p
+  - delay: 171
+    content: o
+  - delay: 61
+    content: r
+  - delay: 149
+    content: t
+  - delay: 190
+    content: "\r\n\e[32m❯\e[0m Sun. 2021-08-22                         [00h 34m]\r\n    ❯ \e[1msupport                            \e[0m [00h 34m]\r\n\e[32m❯\e[0m Mon. 2021-08-23                         [04h 16m]\r\n    ❯ \e[1mmy-app                             \e[0m [04h 16m]"
+  - delay: 3000
+    content: ' '
