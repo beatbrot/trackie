@@ -19,12 +19,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --release
+    - name: Setup Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        profile: minimal
+        components: clippy
+    - name: Lint
+      uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --all-features
     - name: Run tests
-      run: cargo test --verbose
+      if: ${{ runner.os == 'Linux' }}
+      uses: actions-rs/tarpaulin@v0.1
+    - name: Run tests (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+    - name: Upload to codecov
+      if: ${{ runner.os == 'Linux' }}
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Run Benchmarks
-      run: cargo bench
+      uses: actions-rs/cargo@v1
+      with:
+        command: bench
     - name: Publish artifact
       uses: actions/upload-artifact@v2.2.4
       with:
