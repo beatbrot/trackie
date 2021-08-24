@@ -7,7 +7,11 @@ use trackie::cli::Opts;
 pub fn main() {
     include_str!("../Cargo.toml");
     if let Err(e) = run_app(Opts::parse()) {
-        eprintln!("{} {}", "ERROR:".red(), e);
+        if e.print_as_error {
+            eprintln!("{} {}", "ERROR:".red(), e);
+        } else {
+            println!("{}", e);
+        }
         std::process::exit(1);
     }
 }
