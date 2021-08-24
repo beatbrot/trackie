@@ -145,10 +145,7 @@ impl Error for TrackieError {}
 
 #[cfg(test)]
 mod tests {
-    use crate::cli::{
-        Opts, StatusCommand, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG,
-        ENV_TRACKIE_CONFIG,
-    };
+    use crate::cli::{Opts, StatusCommand, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG, ENV_TRACKIE_CONFIG, EmptyCommand};
     use crate::run_app;
     use rand::Rng;
     use std::env;
@@ -212,6 +209,37 @@ mod tests {
                 fallback: None,
             }),
         })?;
+        Ok(())
+    }
+
+
+    #[test]
+    fn stop_tracking() -> Result<(), Box<dyn Error>> {
+        let _ = TestDirectory::create();
+        run_app(Opts {
+            sub_cmd: Subcommand::Start(TimingCommand {
+                project_name: "Foo".to_string(),
+            }),
+        })?;
+
+        run_app(Opts {
+            sub_cmd: Subcommand::Stop(EmptyCommand{})
+        })?;
+
+        let status = run_app(Opts {
+            sub_cmd: Subcommand::Status(StatusCommand {
+                format: None,
+                fallback: None,
+            }),
+        });
+
+        assert!(status.is_err());
+
+        let second_stop = run_app(Opts {
+            sub_cmd: Subcommand::Stop(EmptyCommand{})
+        });
+
+        assert!(second_stop.is_err());
         Ok(())
     }
 
