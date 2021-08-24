@@ -80,14 +80,12 @@ pub fn run_app(o: Opts) -> Result<(), TrackieError> {
             (Some(p), _) => {
                 return Err(TrackieError::new(
                     format!("Already tracking time for project {}", p.project_name).as_str(),
-                )
-                .into())
+                ))
             }
             (_, None) => {
                 return Err(TrackieError::new(
                     "Unable to find latest time log. Maybe no time was ever tracked?",
-                )
-                .into());
+                ));
             }
         },
     }
