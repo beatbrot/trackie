@@ -19,7 +19,6 @@ pub fn load_or_create_log() -> Result<TimeLog, Box<dyn Error>> {
 
 pub fn save_log(log: &TimeLog) -> Result<File, Box<dyn Error>> {
     let trackie_file = trackie_file();
-    println!("{}", trackie_file.to_str().unwrap());
     create_dir_all(&trackie_file.parent().unwrap())?;
 
     let mut f = OpenOptions::new()
