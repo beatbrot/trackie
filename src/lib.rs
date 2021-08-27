@@ -204,6 +204,15 @@ mod tests {
     #[test]
     fn resume_after_stop() -> Result<(), Box<dyn Error>> {
         let mut handler = TestFileHandler::default();
+
+        let x = run_app(
+            Opts {
+                sub_cmd: Subcommand::Resume(EmptyCommand {}),
+            },
+            &mut handler,
+        );
+        assert!(x.is_err());
+
         run_app(
             Opts {
                 sub_cmd: Subcommand::Start(TimingCommand {
