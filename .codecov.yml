@@ -1,6 +1,6 @@
 ignore:
-  - benches/**/*
-  - tests/**/*
+  - benches/*
+  - tests/*
   # These are tested via the integration tests
   - src/main.rs
   - src/persistence.rs
