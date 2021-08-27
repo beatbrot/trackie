@@ -5,7 +5,7 @@ use chrono::Local;
 use crate::cli::{
     Opts, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT,
 };
-use crate::persistence::{load_or_create_log, save_log};
+use crate::persistence::{load_or_create_log, save_log, FileHandler};
 use crate::pretty_string::PrettyString;
 use crate::report_creator::ReportCreator;
 use crate::time_log::TimeLog;
@@ -14,14 +14,14 @@ use std::fmt::Display;
 use std::fmt::Formatter;
 
 pub mod cli;
-mod persistence;
+pub mod persistence;
 mod pretty_string;
 mod report_creator;
 mod time_log;
 
-pub fn run_app(o: Opts) -> Result<(), Box<dyn Error>> {
+pub fn run_app(o: Opts, fh: &mut dyn FileHandler) -> Result<(), TrackieError> {
     let mut modified = false;
-    let mut log = load_or_create_log()?;
+    let mut log = load_or_create_log(fh)?;
     let report_creator = ReportCreator::new(&log);
 
     match o.sub_cmd {
@@ -37,7 +37,7 @@ pub fn run_app(o: Opts) -> Result<(), Box<dyn Error>> {
                 "Tracked {} on project {}",
                 dur.to_pretty_string().bold(),
                 pending.project_name.italic()
-            )
+            );
         }
         Subcommand::Report(o) => {
             let report = report_creator.report_days(Local::today(), o.days, o.include_empty_days);
@@ -51,8 +51,11 @@ pub fn run_app(o: Opts) -> Result<(), Box<dyn Error>> {
                 let msg = s
                     .fallback
                     .unwrap_or_else(|| DEFAULT_EMPTY_STATUS_MSG.to_string());
-                println!("{}", msg);
-                std::process::exit(1);
+
+                return Err(TrackieError {
+                    msg,
+                    print_as_error: false,
+                });
             }
             Some(p) => {
                 let format = s
@@ -65,7 +68,7 @@ pub fn run_app(o: Opts) -> Result<(), Box<dyn Error>> {
                     .replace("%t", p.start.format("%R").to_string().as_str())
                     .replace("%D", p.get_pending_duration().to_pretty_string().as_str());
 
-                println!("{}", output)
+                println!("{}", output);
             }
         },
         Subcommand::Resume(_) => match (&log.pending, log.get_latest_entry()) {
@@ -77,20 +80,18 @@ pub fn run_app(o: Opts) -> Result<(), Box<dyn Error>> {
             (Some(p), _) => {
                 return Err(TrackieError::new(
                     format!("Already tracking time for project {}", p.project_name).as_str(),
-                )
-                .into())
+                ))
             }
             (_, None) => {
                 return Err(TrackieError::new(
                     "Unable to find latest time log. Maybe no time was ever tracked?",
-                )
-                .into());
+                ));
             }
         },
     }
 
     if modified {
-        save_log(&log)?;
+        save_log(fh, &log)?;
     }
 
     Ok(())
@@ -110,12 +111,14 @@ fn start_tracking(log: &mut TimeLog, p: TimingCommand) -> Result<(), Box<dyn Err
 #[derive(Debug)]
 pub struct TrackieError {
     msg: String,
+    pub print_as_error: bool,
 }
 
 impl TrackieError {
     fn new(msg: &str) -> TrackieError {
         TrackieError {
             msg: msg.to_string(),
+            print_as_error: true,
         }
     }
 }
@@ -126,4 +129,163 @@ impl Display for TrackieError {
     }
 }
 
+impl From<Box<dyn Error>> for TrackieError {
+    fn from(i: Box<dyn Error>) -> Self {
+        TrackieError::new(i.to_string().as_str())
+    }
+}
+
+impl From<serde_json::Error> for TrackieError {
+    fn from(e: serde_json::Error) -> Self {
+        TrackieError::new(e.to_string().as_str())
+    }
+}
+
 impl Error for TrackieError {}
+
+#[cfg(test)]
+mod tests {
+    use crate::cli::{
+        EmptyCommand, Opts, StatusCommand, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG,
+    };
+    use crate::persistence::FileHandler;
+    use crate::run_app;
+    use std::error::Error;
+
+    #[test]
+    fn status_on_empty_fallback() {
+        let mut handler = TestFileHandler::default();
+        let e = run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    format: None,
+                    fallback: Some("Foo".to_string()),
+                }),
+            },
+            &mut handler,
+        );
+        assert!(e.is_err());
+        assert_eq!(e.unwrap_err().msg, "Foo");
+    }
+
+    #[test]
+    fn status_on_empty_no_fallback() {
+        let mut handler = TestFileHandler::default();
+        let e = run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    format: None,
+                    fallback: None,
+                }),
+            },
+            &mut handler,
+        );
+        assert!(e.is_err());
+        assert_eq!(e.unwrap_err().msg, DEFAULT_EMPTY_STATUS_MSG);
+    }
+
+    #[test]
+    fn start_tracking() -> Result<(), Box<dyn Error>> {
+        let mut handler = TestFileHandler::default();
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Start(TimingCommand {
+                    project_name: "Foo".to_string(),
+                }),
+            },
+            &mut handler,
+        )?;
+
+        // let json_path = t.path.join("trackie.json");
+        // assert!(json_path.is_file());
+        // assert!(std::fs::read_to_string(json_path).unwrap().contains("Foo"));
+        Ok(())
+    }
+
+    #[test]
+    fn status_after_start_tracking() -> Result<(), Box<dyn Error>> {
+        let mut handler = TestFileHandler::default();
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Start(TimingCommand {
+                    project_name: "Foo".to_string(),
+                }),
+            },
+            &mut handler,
+        )?;
+
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    format: None,
+                    fallback: None,
+                }),
+            },
+            &mut handler,
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn stop_tracking() -> Result<(), Box<dyn Error>> {
+        let mut handler = TestFileHandler::default();
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Start(TimingCommand {
+                    project_name: "Foo".to_string(),
+                }),
+            },
+            &mut handler,
+        )?;
+
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Stop(EmptyCommand {}),
+            },
+            &mut handler,
+        )?;
+
+        let status = run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    format: None,
+                    fallback: None,
+                }),
+            },
+            &mut handler,
+        );
+
+        assert!(status.is_err());
+
+        let second_stop = run_app(
+            Opts {
+                sub_cmd: Subcommand::Stop(EmptyCommand {}),
+            },
+            &mut handler,
+        );
+
+        assert!(second_stop.is_err());
+        Ok(())
+    }
+
+    struct TestFileHandler {
+        content: Option<String>,
+    }
+
+    impl Default for TestFileHandler {
+        fn default() -> Self {
+            Self { content: None }
+        }
+    }
+
+    impl FileHandler for TestFileHandler {
+        fn read_file(&self) -> Result<Option<String>, Box<dyn Error>> {
+            Ok(self.content.clone())
+        }
+
+        fn write_file(&mut self, content: &str) -> Result<(), Box<dyn Error>> {
+            self.content = Some(content.to_string());
+            Ok(())
+        }
+    }
+}
