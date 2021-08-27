@@ -15,8 +15,7 @@ categories = ["command-line-utilities", "visualization"]
 
 [package.metadata.release]
 allow-branch = ["master"]
-disable-push = true
-disable-publish = true
+no-dev-version = true
 pre-release-replacements = [
     { file = "CHANGELOG.md", search = "Unreleased", replace = "{{version}}" },
     { file = "CHANGELOG.md", search = "\\.\\.\\.HEAD", replace = "...{{tag_name}}", exactly = 1 },
