@@ -196,9 +196,58 @@ mod tests {
             &mut handler,
         )?;
 
-        // let json_path = t.path.join("trackie.json");
-        // assert!(json_path.is_file());
-        // assert!(std::fs::read_to_string(json_path).unwrap().contains("Foo"));
+        let content = handler.content.unwrap();
+        assert!(content.contains("Foo"));
+        Ok(())
+    }
+
+    #[test]
+    fn resume_after_stop() -> Result<(), Box<dyn Error>> {
+        let mut handler = TestFileHandler::default();
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Start(TimingCommand {
+                    project_name: "Foo".to_string(),
+                }),
+            },
+            &mut handler,
+        )?;
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Stop(EmptyCommand {}),
+            },
+            &mut handler,
+        )?;
+
+        let status = run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    fallback: None,
+                    format: None,
+                }),
+            },
+            &mut handler,
+        );
+        assert!(status.is_err());
+
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Resume(EmptyCommand {}),
+            },
+            &mut handler,
+        )?;
+
+        let status = run_app(
+            Opts {
+                sub_cmd: Subcommand::Status(StatusCommand {
+                    fallback: None,
+                    format: None,
+                }),
+            },
+            &mut handler,
+        );
+        assert!(status.is_ok());
+
         Ok(())
     }
 
