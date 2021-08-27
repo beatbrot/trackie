@@ -2,7 +2,7 @@ use crate::cli::ENV_TRACKIE_CONFIG;
 use crate::time_log::TimeLog;
 use std::env;
 use std::error::Error;
-use std::fs::{create_dir_all, read_to_string, rename,  OpenOptions};
+use std::fs::{create_dir_all, read_to_string, rename, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -56,6 +56,12 @@ impl FsFileHandler {
     }
 }
 
+impl Default for FsFileHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FileHandler for FsFileHandler {
     fn read_file(&self) -> Result<Option<String>, Box<dyn Error>> {
         Self::move_legacy_config_file()?;
@@ -77,7 +83,7 @@ impl FileHandler for FsFileHandler {
             .truncate(true)
             .open(trackie_file)?;
 
-        f.write(content.as_bytes())?;
+        f.write_all(content.as_bytes())?;
         f.flush()?;
         Ok(())
     }
