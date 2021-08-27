@@ -1,6 +1,19 @@
 <div align="center">
 <h1>⏳ trackie</h1>
-
+  <p>
+    <a href="https://spdx.org/licenses/Apache-2.0.html">
+      <img alt="Crates.io" src="https://img.shields.io/crates/l/trackie">
+    </a>
+    <a href="https://crates.io/crates/trackie">
+      <img alt="Crates.io" src="https://img.shields.io/crates/v/trackie">
+    </a>
+    <a href="https://github.com/beatbrot/trackie/actions/workflows/rust.yml">
+      <img alt="GitHub Workflow Status" src="https://img.shields.io/github/workflow/status/beatbrot/trackie/Rust">
+    </a>
+    <a href="https://codecov.io/gh/beatbrot/trackie">
+      <img src="https://codecov.io/gh/beatbrot/trackie/branch/master/graph/badge.svg?token=M1UUT2YYD6"/>
+    </a>
+    </p>
 `trackie` is a private, daemon-less time tracker running in your CLI.
 </div>
 
