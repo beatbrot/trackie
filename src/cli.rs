@@ -1,10 +1,10 @@
-use clap::{crate_authors, crate_version, Clap};
+use clap::{crate_authors, crate_version, Parser};
 
 pub const DEFAULT_STATUS_FORMAT: &str = "Tracking %p since %d (%t) [%D]";
 pub const DEFAULT_EMPTY_STATUS_MSG: &str = "Currently tracking no project.";
 pub const ENV_TRACKIE_CONFIG: &str = "TRACKIE_CONFIG";
 
-#[derive(Clap)]
+#[derive(Parser)]
 #[clap(author=crate_authors!(), version=crate_version!())]
 /// A simple, private, time tracking utility.
 pub struct Opts {
@@ -12,7 +12,7 @@ pub struct Opts {
     pub sub_cmd: Subcommand,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub enum Subcommand {
     /// Starts the time tracking for a project
     Start(TimingCommand),
@@ -35,7 +35,7 @@ pub enum Subcommand {
     Resume(EmptyCommand),
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct StatusCommand {
     /// A format string describing the output of the command.
     #[clap(short, long)]
@@ -46,16 +46,16 @@ pub struct StatusCommand {
     pub fallback: Option<String>,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct EmptyCommand {}
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct TimingCommand {
     /// The name of the project
     pub project_name: String,
 }
 
-#[derive(Clap)]
+#[derive(Parser)]
 pub struct ReportCommand {
     /// The amount of days to include in the report.
     #[clap(short, long, default_value = "5")]

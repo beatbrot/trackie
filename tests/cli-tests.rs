@@ -12,7 +12,7 @@ fn test_error_if_no_args() {
         .stderr(predicates::str::contains("report"))
         .stderr(predicates::str::contains("start"))
         .stderr(predicates::str::contains("stop"))
-        .success();
+        .code(2);
 }
 
 #[test]
