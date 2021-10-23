@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use colored::Colorize;
 use trackie::cli::Opts;
 use trackie::persistence::FsFileHandler;
