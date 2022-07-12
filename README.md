@@ -105,6 +105,21 @@ To get an equivalent prompt with "Oh my Posh", use the following `segement` code
 }
 ```
 
+### Completion
+
+Use the `completion` command to generate the completion script for your shell. 
+See `trackie completion --help` for details.
+
+Exemple with zsh:
+
+```zsh
+trackie completion zsh > /usr/local/share/zsh/site-functions/_trackie 
+```
+
+> **Note** 
+> Make sure to restart your shell for the changes to take effect
+
+
 ## Installation
 
 #### Download prebuilt release

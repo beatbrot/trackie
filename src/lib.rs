@@ -3,15 +3,19 @@ use std::error::Error;
 use chrono::Local;
 
 use crate::cli::{
-    Opts, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG, DEFAULT_STATUS_FORMAT,
+    CompletionCommand, Opts, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG,
+    DEFAULT_STATUS_FORMAT,
 };
 use crate::persistence::{load_or_create_log, save_log, FileHandler};
 use crate::pretty_string::PrettyString;
 use crate::report_creator::ReportCreator;
 use crate::time_log::TimeLog;
+use clap::{Command, CommandFactory};
+use clap_complete::{generate, Generator};
 use colored::Colorize;
 use std::fmt::Display;
 use std::fmt::Formatter;
+use std::io;
 
 pub mod cli;
 pub mod persistence;
@@ -88,6 +92,10 @@ pub fn run_app(o: Opts, fh: &mut dyn FileHandler) -> Result<(), TrackieError> {
                 ));
             }
         },
+        Subcommand::Completion(CompletionCommand { shell }) => {
+            let mut cmd = Opts::command();
+            print_completions(shell, &mut cmd);
+        }
     }
 
     if modified {
@@ -106,6 +114,10 @@ fn start_tracking(log: &mut TimeLog, p: TimingCommand) -> Result<(), Box<dyn Err
         p.project_name.as_str().italic()
     );
     Ok(())
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
 }
 
 #[derive(Debug)]
