@@ -157,8 +157,11 @@ impl Error for TrackieError {}
 
 #[cfg(test)]
 mod tests {
+    use clap_complete::Shell;
+
     use crate::cli::{
-        EmptyCommand, Opts, StatusCommand, Subcommand, TimingCommand, DEFAULT_EMPTY_STATUS_MSG,
+        CompletionCommand, EmptyCommand, Opts, StatusCommand, Subcommand, TimingCommand,
+        DEFAULT_EMPTY_STATUS_MSG,
     };
     use crate::persistence::FileHandler;
     use crate::run_app;
@@ -335,6 +338,18 @@ mod tests {
         );
 
         assert!(second_stop.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn generate_completion() -> Result<(), Box<dyn Error>> {
+        let mut handler = TestFileHandler::default();
+        run_app(
+            Opts {
+                sub_cmd: Subcommand::Completion(CompletionCommand { shell: Shell::Bash }),
+            },
+            &mut handler,
+        )?;
         Ok(())
     }
 
