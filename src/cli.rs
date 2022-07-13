@@ -1,4 +1,5 @@
 use clap::{crate_authors, crate_version, Parser};
+use clap_complete::Shell;
 
 pub const DEFAULT_STATUS_FORMAT: &str = "Tracking %p since %d (%t) [%D]";
 pub const DEFAULT_EMPTY_STATUS_MSG: &str = "Currently tracking no project.";
@@ -31,8 +32,16 @@ pub enum Subcommand {
     #[clap(verbatim_doc_comment)]
     Status(StatusCommand),
     /// Resumes time tracking for the last tracked project.
-    #[clap(visible_alias="rs")]
+    #[clap(visible_alias = "rs")]
     Resume(EmptyCommand),
+    /// Generate tab-completion scripts for your shell
+    Completion(CompletionCommand),
+}
+
+#[derive(Parser)]
+pub struct CompletionCommand {
+    #[clap(value_parser)]
+    pub shell: Shell,
 }
 
 #[derive(Parser)]
@@ -67,5 +76,5 @@ pub struct ReportCommand {
 
     /// Dump report as JSON
     #[clap(long)]
-    pub json: bool
+    pub json: bool,
 }
