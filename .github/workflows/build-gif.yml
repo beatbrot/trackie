@@ -6,6 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: DamianReeves/write-file-action@master
+        with:
+          path: ~/.config/starship.toml
+          contents: |
+            format="$custom$character"
+          write-mode: overwrite
       - run: curl -sS https://starship.rs/install.sh | sh /dev/stdin -f
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo install --path .
