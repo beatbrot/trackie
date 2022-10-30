@@ -1,4 +1,4 @@
-Output demo.gif
+Output .github/media/terminal-session.gif
 
 Set FontFamily 'Cascadia Code PL'
 Set FontSize 16
