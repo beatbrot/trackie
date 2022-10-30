@@ -1,6 +1,6 @@
 Output .github/media/terminal-session.gif
 
-Set FontFamily 'Cascadia Code PL'
+#Set FontFamily 'Cascadia Code PL'
 Set FontSize 16
 Set Width 800
 Set Height 360
