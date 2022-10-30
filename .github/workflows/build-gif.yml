@@ -7,13 +7,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: curl -sS https://starship.rs/install.sh | sh /dev/stdin -f
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: --path .
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo install --path .
       - uses: charmbracelet/vhs-action@main
         with:
           install-fonts: true
