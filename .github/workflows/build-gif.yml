@@ -16,7 +16,7 @@ jobs:
           args: --path .
       - uses: charmbracelet/vhs-action@main
         with:
-          install-fonts: false
+          install-fonts: true
           path: '.github/media/terminal-session.tape'
       - uses: stefanzweifel/git-auto-commit-action@v4
         env:
