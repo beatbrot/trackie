@@ -34,6 +34,8 @@ jobs:
     - name: Run tests
       if: ${{ runner.os == 'Linux' }}
       uses: actions-rs/tarpaulin@v0.1
+      with:
+        version: 0.22.0
     - name: Run tests (Windows)
       if: ${{ runner.os == 'Windows' }}
       uses: actions-rs/cargo@v1
